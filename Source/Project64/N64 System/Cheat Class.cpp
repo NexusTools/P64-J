@@ -48,18 +48,18 @@ bool CCheats::LoadCode (int CheatNo, LPCSTR CheatString)
 
 		if (strncmp(ReadPos,"????",4) == 0) {
 			if (CheatNo < 0 || CheatNo > MaxCheats) { return false; }
-			stdstr CheatExt = _Settings->LoadString((SettingID)(CheatExtension + CheatNo));
+			stdstr CheatExt = _Settings->LoadStringIndex(Cheat_Extension,CheatNo);
 			if (CheatExt.empty()) { return false; }
 			CodeEntry.Value = CheatExt[0] == '$'?(WORD)AsciiToHex(&CheatExt.c_str()[1]):(WORD)atol(CheatExt.c_str());
 		} else if (strncmp(ReadPos,"??",2) == 0) {
 			if (CheatNo < 0 || CheatNo > MaxCheats) { return false; }
-			stdstr CheatExt = _Settings->LoadString((SettingID)(CheatExtension + CheatNo));
+			stdstr CheatExt = _Settings->LoadStringIndex(Cheat_Extension,CheatNo);
 			if (CheatExt.empty()) { return false; }
 			CodeEntry.Value = (BYTE)(AsciiToHex(ReadPos));
 			CodeEntry.Value |= (CheatExt[0] == '$'?(BYTE)AsciiToHex(&CheatExt.c_str()[1]):(BYTE)atol(CheatExt.c_str())) << 16;
 		} else if (strncmp(&ReadPos[2],"??",2) == 0) {	
 			if (CheatNo < 0 || CheatNo > MaxCheats) { return false; }
-			stdstr CheatExt = _Settings->LoadString((SettingID)(CheatExtension + CheatNo));
+			stdstr CheatExt = _Settings->LoadStringIndex(Cheat_Extension,CheatNo);
 			if (CheatExt.empty()) { return false; }
 			CodeEntry.Value = (WORD)(AsciiToHex(ReadPos) << 16);
 			CodeEntry.Value |= CheatExt[0] == '$'?(BYTE)AsciiToHex(&CheatExt.c_str()[1]):(BYTE)atol(CheatExt.c_str());
@@ -86,18 +86,19 @@ bool CCheats::LoadCode (int CheatNo, LPCSTR CheatString)
 
 void CCheats::LoadPermCheats (void) 
 {
-	if (_Settings->LoadDword(DisableGameFixes))
+	if (_Settings->LoadBool(Debugger_DisableGameFixes))
 	{
 		return;
 	}
-#ifdef tofix
 	for (int CheatNo = 0; CheatNo < MaxCheats; CheatNo ++ ) 
 	{
-		stdstr LineEntry = _Settings->LoadString((SettingID)(CheatPermEntry + CheatNo));
-		if (LineEntry.empty()) { break; }		
+		stdstr LineEntry;
+		if (!_Settings->LoadStringIndex(Rdb_GameCheatFix,CheatNo,LineEntry) || LineEntry.empty())
+		{
+			break;
+		}
 		LoadCode(-1, LineEntry.c_str());
 	}
-#endif
 }
 
 void CCheats::LoadCheats(bool DisableSelected) {
@@ -105,22 +106,21 @@ void CCheats::LoadCheats(bool DisableSelected) {
 	m_Codes.clear();
 	LoadPermCheats();
 
-#ifdef tofix
 	for (int CheatNo = 0; CheatNo < MaxCheats; CheatNo ++ ) 
 	{
-		stdstr LineEntry = _Settings->LoadString((SettingID)(CheatEntry + CheatNo));
+		stdstr LineEntry = _Settings->LoadStringIndex(Cheat_Entry,CheatNo);
 		if (LineEntry.empty()) { break; }
-		if (!_Settings->LoadDword((SettingID)(CheatActive + CheatNo)))
+		if (!_Settings->LoadBoolIndex(Cheat_Active,CheatNo))
 		{
 			continue;
 		}
 		if (DisableSelected)
 		{
-			_Settings->SaveDword((SettingID)(CheatActive + CheatNo),(DWORD)false);
+			_Settings->SaveBoolIndex(Cheat_Active,CheatNo,false);
 			continue;
 		}
 
-		//Find the start and end of the name which is surronded in ""
+		//Find the start and end of the name which is surrounded in ""
 		int StartOfName = LineEntry.find("\"");
 		if (StartOfName == -1) { continue; }
 		int EndOfName = LineEntry.find("\"",StartOfName + 1);
@@ -128,7 +128,6 @@ void CCheats::LoadCheats(bool DisableSelected) {
 		
 		LoadCode(CheatNo, &LineEntry.c_str()[EndOfName + 2]);
 	}
-#endif
 }
 
 /********************************************************************************************
@@ -172,7 +171,7 @@ void CCheats::ApplyCheats(CMipsMemory * _MMU)
 	for (int CurrentCheat = 0; CurrentCheat < m_Codes.size(); CurrentCheat ++) 
 	{
 		const CODES & CodeEntry = m_Codes[CurrentCheat];
-		for (size_t CurrentEntry = 0; CurrentEntry < CodeEntry.size();)
+		for (int CurrentEntry = 0; CurrentEntry < CodeEntry.size();)
 		{
 			CurrentEntry += ApplyCheatEntry(_MMU, CodeEntry,CurrentEntry,TRUE);
 		}
@@ -182,7 +181,7 @@ void CCheats::ApplyCheats(CMipsMemory * _MMU)
 void CCheats::ApplyGSButton (CMipsMemory * _MMU) 
 {
 	DWORD Address;
-	for (size_t CurrentCheat = 0; CurrentCheat < m_Codes.size(); CurrentCheat ++) 
+	for (int CurrentCheat = 0; CurrentCheat < m_Codes.size(); CurrentCheat ++) 
 	{
 		const CODES & CodeEntry = m_Codes[CurrentCheat];
 		for (int CurrentEntry = 0; CurrentEntry < CodeEntry.size(); CurrentEntry ++)
@@ -518,12 +517,13 @@ void CCheats::AddCodeLayers (int CheatNumber, stdstr &CheatName, WND_HANDLE hPar
 	AddCodeLayers(CheatNumber,(stdstr)(CheatName.substr(strlen(Text) + 1)), hParent, CheatActive);
 }
 
-stdstr CCheats::GetCheatName(int CheatNo, bool AddExtension) const {
+stdstr CCheats::GetCheatName(int CheatNo, bool AddExtension) const 
+{
 	if (CheatNo > MaxCheats) { _Notify->BreakPoint(__FILE__,__LINE__); }
-	stdstr LineEntry = _Settings->LoadString((SettingID)(CheatEntry + CheatNo));
+	stdstr LineEntry = _Settings->LoadStringIndex(Cheat_Entry,CheatNo);
 	if (LineEntry.length() == 0) { return LineEntry; }
 	
-	//Find the start and end of the name which is surronded in ""
+	//Find the start and end of the name which is surrounded in ""
 	int StartOfName = LineEntry.find("\"");
 	if (StartOfName == -1) { return stdstr(""); }
 	int EndOfName = LineEntry.find("\"",StartOfName + 1);
@@ -537,7 +537,7 @@ stdstr CCheats::GetCheatName(int CheatNo, bool AddExtension) const {
 		Name.replace("\\","\\*** ");
 	}
 	if (AddExtension && CheatUsesCodeExtensions(LineEntry)) {
-		stdstr CheatValue(_Settings->LoadString((SettingID)(CheatExtension + CheatNo)));
+		stdstr CheatValue(_Settings->LoadStringIndex(Cheat_Extension,CheatNo));
 		Name.Format("%s (=>%s)",Name.c_str(),CheatValue.c_str());
 	}
 
@@ -567,7 +567,8 @@ bool CCheats::CheatUsesCodeExtensions (const stdstr &LineEntry) {
 	return CodeExtension;
 }
 
-void CCheats::RefreshCheatManager(void) {
+void CCheats::RefreshCheatManager(void) 
+{
 	if (m_Window == NULL) { return; }
 
     int CurrentEdit = m_EditCheat;
@@ -579,7 +580,7 @@ void CCheats::RefreshCheatManager(void) {
 		stdstr Name = GetCheatName(count,true);
 		if (Name.length() == 0) { break; }
 
-		AddCodeLayers(count,Name,(WND_HANDLE)TVI_ROOT, _Settings->LoadDword((SettingID)(CheatActive + count)) != 0);
+		AddCodeLayers(count,Name,(WND_HANDLE)TVI_ROOT, _Settings->LoadBoolIndex(Cheat_Active,count) != 0);
 	}
 }
 
@@ -776,9 +777,9 @@ int CALLBACK CCheats::CheatAddProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DWO
 					stdstr_f Cheat("\"%s\"%s",NewCheatName.c_str(),ReadCodeString(hDlg,validcodes,validoptions,nooptions,CodeFormat).c_str());
 					stdstr Options = ReadOptionsString(hDlg,validcodes,validoptions,nooptions,CodeFormat);
 						
-					_Settings->SaveString((SettingID)(CheatEntry + _this->m_EditCheat),Cheat.c_str());
-					_Settings->SaveString((SettingID)(CheatNotes + _this->m_EditCheat),GetDlgItemStr(hDlg,IDC_NOTES).c_str());
-					_Settings->SaveString((SettingID)(CheatOptions + _this->m_EditCheat),Options.c_str());
+					_Settings->SaveStringIndex(Cheat_Entry, _this->m_EditCheat,Cheat.c_str());
+					_Settings->SaveStringIndex(Cheat_Notes, _this->m_EditCheat,GetDlgItemStr(hDlg,IDC_NOTES));
+					_Settings->SaveStringIndex(Cheat_Options, _this->m_EditCheat,Options);
 					_this->RecordCheatValues(hDlg);
 					_this->RefreshCheatManager();
 				}
@@ -820,7 +821,7 @@ int CALLBACK CCheats::CheatAddProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DWO
 				break;
 			}
 
-			stdstr CheatEntryStr = _Settings->LoadString((SettingID)(CheatEntry + _this->m_EditCheat));
+			stdstr CheatEntryStr = _Settings->LoadStringIndex(Cheat_Entry,_this->m_EditCheat);
 			LPCSTR String = CheatEntryStr.c_str();
 			
 			//Set Cheat Name
@@ -850,7 +851,7 @@ int CALLBACK CCheats::CheatAddProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DWO
 			SetDlgItemText((HWND)hDlg,IDC_CHEAT_CODES,Buffer.c_str());
 
 			//Add option values to screen			
-			stdstr CheatOptionStr = _Settings->LoadString((SettingID)(CheatOptions + _this->m_EditCheat));
+			stdstr CheatOptionStr = _Settings->LoadStringIndex(Cheat_Options,_this->m_EditCheat);
 			ReadPos = strchr(CheatOptionStr.c_str(),'$');
 			Buffer.erase();
 			if (ReadPos) {
@@ -873,7 +874,7 @@ int CALLBACK CCheats::CheatAddProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DWO
 			SetDlgItemText((HWND)hDlg,IDC_CHEAT_OPTIONS,Buffer.c_str());
 			
 			//Add cheat Notes
-			stdstr CheatNotesStr = _Settings->LoadString((SettingID)(CheatNotes + _this->m_EditCheat));
+			stdstr CheatNotesStr = _Settings->LoadStringIndex(Cheat_Notes,_this->m_EditCheat);
 			SetDlgItemText((HWND)hDlg,IDC_NOTES,CheatNotesStr.c_str());
 
 		
@@ -989,7 +990,7 @@ int CALLBACK CCheats::CheatListProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DW
 
 				TreeView_HitTest(lpnmh->hwndFrom, &ht);
 				_this->m_hSelectedItem = (WND_HANDLE)ht.hItem;
-				if (_Settings->LoadDword(BasicMode)) { return true; }
+				if (_Settings->LoadBool(UserInterface_BasicMode)) { return true; }
 
 				//Show Menu
 				HMENU hMenu = LoadMenu(GetModuleHandle(NULL),MAKEINTRESOURCE(IDR_CHEAT_MENU));
@@ -1036,12 +1037,13 @@ int CALLBACK CCheats::CheatListProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DW
 							item.mask  = TVIF_PARAM ;
 							item.hItem = (HTREEITEM)ht.hItem;
 							TreeView_GetItem((HWND)_this->m_hCheatTree,&item);
-							stdstr LineEntry = _Settings->LoadString((SettingID)(CheatEntry + item.lParam));
-							if (CheatUsesCodeExtensions(LineEntry)) {
-								if (_Settings->LoadString((SettingID)(CheatExtension + item.lParam)) ==_Settings->LoadString(Default_CheatExt)) {
+							stdstr LineEntry = _Settings->LoadStringIndex(Cheat_Entry,item.lParam);
+							if (CheatUsesCodeExtensions(LineEntry)) 
+							{
+								stdstr CheatExtension;
+								if (!_Settings->LoadStringIndex(Cheat_Extension,item.lParam,CheatExtension))
+								{
 									SendMessage((HWND)hDlg, UM_CHANGECODEEXTENSION, 0, (LPARAM)ht.hItem);
-								}
-								if (_Settings->LoadString((SettingID)(CheatExtension + item.lParam)) ==_Settings->LoadString(Default_CheatExt)) {
 									TV_SetCheckState(_this->m_hCheatTree,(WND_HANDLE)ht.hItem,TV_STATE_CLEAR); 
 									break;
 								}
@@ -1094,7 +1096,7 @@ int CALLBACK CCheats::CheatListProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DW
 					item.hItem = hItem;
 					TreeView_GetItem((HWND)_this->m_hCheatTree,&item);
 
-					stdstr Notes(_Settings->LoadString((SettingID)(CheatNotes + item.lParam)));
+					stdstr Notes(_Settings->LoadStringIndex(Cheat_Notes,item.lParam));
 					SetDlgItemText((HWND)hDlg,IDC_NOTES,Notes.c_str());
 					if (_this->m_AddCheat)
 					{
@@ -1118,29 +1120,31 @@ int CALLBACK CCheats::CheatListProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DW
 			TreeView_GetItem((HWND)_this->m_hCheatTree,&item);
 		
 			//Make sure the selected line can use code extensions	
-			stdstr LineEntry = _Settings->LoadString((SettingID)(CheatEntry + item.lParam));
+			stdstr LineEntry = _Settings->LoadStringIndex(Cheat_Entry,item.lParam);
 			if (!CheatUsesCodeExtensions(LineEntry)) { break; }
 
-			stdstr Options(_Settings->LoadString((SettingID)(CheatOptions + item.lParam)));
-			if (Options.length() > 0) {
+			stdstr Options;
+			if (_Settings->LoadStringIndex(Cheat_Options,item.lParam,Options) && Options.length() > 0)
+			{
 				DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_Cheats_CodeEx),(HWND)hDlg,(DLGPROC)CheatsCodeExProc,(LPARAM)_this);
 			} else {
-				stdstr Range(_Settings->LoadString((SettingID)(CheatRange + item.lParam)));
-				if (Range.length() > 0) {
+				stdstr Range;
+				if (_Settings->LoadStringIndex(Cheat_Range,item.lParam,Range) && Range.length() > 0) 
+				{
 					DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_Cheats_Range),(HWND)hDlg,(DLGPROC)CheatsCodeQuantProc,(LPARAM)_this);
 				}
 			}
 			
 			//Update cheat listing with new extention
 			stdstr CheatName(_this->GetCheatName(item.lParam,true));
-			const char * Cheat = strrchr(CheatName.c_str(),'\\');
+			char * Cheat = (char *)strrchr(CheatName.c_str(),'\\');
 			if (Cheat == NULL) { 
 				Cheat = const_cast<char *>(CheatName.c_str()); 
 			} else {
 				Cheat += 1;
 			}
 			item.mask = TVIF_TEXT;
-			item.pszText = (LPSTR )Cheat;
+			item.pszText = Cheat;
 			item.cchTextMax = CheatName.length();
 			TreeView_SetItem((HWND)_this->m_hCheatTree,&item);
 		}
@@ -1173,8 +1177,8 @@ int CALLBACK CCheats::CheatsCodeExProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam,
 			SetDlgItemText((HWND)hDlg,IDC_CHEAT_NAME,CheatName.c_str());			
 			
 			//Read through and add all options to the list box
-			stdstr Options(_Settings->LoadString((SettingID)(CheatOptions + item.lParam)));
-			stdstr CurrentExt(_Settings->LoadString((SettingID)(CheatExtension + item.lParam)));
+			stdstr Options(_Settings->LoadStringIndex(Cheat_Options,item.lParam));
+			stdstr CurrentExt(_Settings->LoadStringIndex(Cheat_Extension,item.lParam));
 			const char * ReadPos = Options.c_str();
 			while (*ReadPos != 0) {
 				const char * NextComma = strchr(ReadPos,',');
@@ -1211,7 +1215,7 @@ int CALLBACK CCheats::CheatsCodeExProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam,
 				if (index < 0) { index = 0; }
 				SendMessage(GetDlgItem((HWND)hDlg,IDC_CHEAT_LIST),LB_GETTEXT,index,(LPARAM)CheatExten);
 				
-				_Settings->SaveString((SettingID)(CheatExtension + item.lParam),CheatExten);
+				_Settings->SaveStringIndex(Cheat_Extension,item.lParam,CheatExten);
 				_this->m_CheatSelectionChanged = true;
 			}
 			RemoveProp((HWND)hDlg,"Class");
@@ -1243,9 +1247,9 @@ int CALLBACK CCheats::CheatsCodeQuantProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wPar
 			item.mask = TVIF_PARAM ;
 			TreeView_GetItem((HWND)_this->m_hCheatTree,&item);
 			stdstr CheatName = _this->GetCheatName(item.lParam,false);			
-			stdstr RangeNote(_Settings->LoadString((SettingID)(CheatRangeNotes + item.lParam)));
-			stdstr Range(_Settings->LoadString((SettingID)(CheatRange + item.lParam)));
-			stdstr Value(_Settings->LoadString((SettingID)(CheatExtension + item.lParam)));
+			stdstr RangeNote(_Settings->LoadStringIndex(Cheat_RangeNotes, item.lParam));
+			stdstr Range(_Settings->LoadStringIndex(Cheat_Range,item.lParam));
+			stdstr Value(_Settings->LoadStringIndex(Cheat_Extension,item.lParam));
 	
 			//Set up language support for dialog
 			SetWindowText((HWND)hDlg, GS(CHEAT_CODE_EXT_TITLE));
@@ -1311,7 +1315,7 @@ int CALLBACK CCheats::CheatsCodeQuantProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wPar
 				if (Value < Start) { Value = Start; }
 				sprintf(CheatExten,"$%X",Value);
 				
-				_Settings->SaveString((SettingID)(CheatExtension + item.lParam),CheatExten);
+				_Settings->SaveStringIndex(Cheat_Extension, item.lParam,CheatExten);
 				_this->m_CheatSelectionChanged = true;
 			}
 			RemoveProp((HWND)hDlg,"Class");
@@ -1355,7 +1359,7 @@ int CALLBACK CCheats::ManageCheatsProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam,
 			ShowWindow((HWND)_this->m_hSelectCheat,SW_SHOW);
 
 			RECT * rc = &WndPlac.rcNormalPosition;
-			if (_Settings->LoadDword(BasicMode)) 
+			if (_Settings->LoadDword(UserInterface_BasicMode)) 
 			{
 				RECT * rcAdd = (RECT *)_this->m_rcAdd, * rcList = (RECT *)_this->m_rcList;
 				GetWindowRect(GetDlgItem((HWND)_this->m_hSelectCheat, IDC_CHEATSFRAME), rcList);
@@ -1543,16 +1547,18 @@ void CCheats::ChangeChildrenStatus(WND_HANDLE hParent, bool Checked) {
 
 		//if cheat uses a extension and it is not set then do not set it
 		if (Checked) {
-			stdstr LineEntry = _Settings->LoadString((SettingID)(CheatEntry + item.lParam));
+			stdstr LineEntry = _Settings->LoadStringIndex(Cheat_Entry,item.lParam);
 			if (CheatUsesCodeExtensions(LineEntry)) {
-				if (_Settings->LoadString((SettingID)(CheatExtension + item.lParam)) ==_Settings->LoadString(Default_CheatExt)) {
+				stdstr CheatExten;
+				if (!_Settings->LoadStringIndex(Cheat_Extension,item.lParam,CheatExten) || CheatExten.empty())
+				{
 					return;
 				}
 			}
 		}
 		//Save Cheat
 		TV_SetCheckState(m_hCheatTree,hParent,Checked?TV_STATE_CHECKED:TV_STATE_CLEAR); 
-		_Settings->SaveDword((SettingID)(CheatActive + item.lParam),Checked);
+		_Settings->SaveDwordIndex(Cheat_Active,item.lParam,Checked);
 		return; 
 	}
 	TV_CHECK_STATE state = TV_STATE_UNKNOWN;

@@ -34,6 +34,7 @@ LPSTR ValidateEncryptString (LPSTR String, int Len)
 
 void TestValidBinaryThread ( )
 {
+#ifdef tofix
 	typedef struct 
 	{
 		BYTE File_md5[16];
@@ -314,10 +315,12 @@ void TestValidBinaryThread ( )
 		}
 	}
 	_Settings->SaveDword(IsValidExe,DefaultResult);
+#endif
 }
 
 void TestValidBinary ( )
 {
+#ifdef tofix
 #if defined(EXTERNAL_RELEASE) || defined(VALIDATE_BIN_LOCAL)
 	static DWORD ThreadID = 0;
 	if (ThreadID == 0)
@@ -325,5 +328,6 @@ void TestValidBinary ( )
 		HANDLE hThread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)TestValidBinaryThread,(LPVOID)NULL,0,&ThreadID);
 		CloseHandle(hThread);
 	}
+#endif
 #endif
 }

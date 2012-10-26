@@ -7,8 +7,7 @@
 #include "Settings Page.h"
 #include "Settings Page - Game - Plugin.h"
 
-CGamePluginPage::CGamePluginPage (HWND hParent, const RECT & rcDispay ) :
-	m_PluginList(_Settings)
+CGamePluginPage::CGamePluginPage (HWND hParent, const RECT & rcDispay ) 
 {
 	if (!Create(hParent,rcDispay))
 	{
@@ -29,20 +28,18 @@ CGamePluginPage::CGamePluginPage (HWND hParent, const RECT & rcDispay ) :
 	SetDlgItemText(IDC_HLE_GFX,GS(PLUG_HLE_GFX));
 	SetDlgItemText(IDC_HLE_AUDIO,GS(PLUG_HLE_AUDIO));		
 
-	m_GfxGroup.Attach(GetDlgItem(IDC_GFX_NAME));
+	m_GfxGroup.Attach(GetDlgItem(IDC_GRAPHICS_NAME));
 	m_AudioGroup.Attach(GetDlgItem(IDC_AUDIO_NAME));
 	m_ControlGroup.Attach(GetDlgItem(IDC_CONT_NAME));
 	m_RspGroup.Attach(GetDlgItem(IDC_RSP_NAME));
 
-#ifdef tofix
-	AddPlugins(GFX_LIST,Game_EditPlugin_Gfx,PLUGIN_TYPE_GFX);
-	AddPlugins(AUDIO_LIST,Game_EditPlugin_Audio,PLUGIN_TYPE_AUDIO);
-	AddPlugins(CONT_LIST,Game_EditPlugin_Contr,PLUGIN_TYPE_CONTROLLER);
-	AddPlugins(RSP_LIST,Game_EditPlugin_RSP,PLUGIN_TYPE_RSP);
+	AddPlugins(GFX_LIST,Game_Plugin_Gfx,PLUGIN_TYPE_GFX);
+	AddPlugins(AUDIO_LIST,Game_Plugin_Audio,PLUGIN_TYPE_AUDIO);
+	AddPlugins(CONT_LIST,Game_Plugin_Controller,PLUGIN_TYPE_CONTROLLER);
+	AddPlugins(RSP_LIST,Game_Plugin_RSP,PLUGIN_TYPE_RSP);
 
 	AddModCheckBox(GetDlgItem(IDC_HLE_GFX),Game_UseHleGfx);
 	AddModCheckBox(GetDlgItem(IDC_HLE_AUDIO),Game_UseHleAudio);
-#endif
 	
 	UpdatePageSettings();
 }
@@ -58,9 +55,8 @@ void CGamePluginPage::AddPlugins (int ListId,SettingID Type, PLUGIN_TYPE PluginT
 	{
 		ComboBox->SetDefault(NULL);
 	}
-#ifdef tofix
 	ComboBox->AddItem(GS(PLUG_DEFAULT), NULL);
-
+	
 	for (int i = 0, n = m_PluginList.GetPluginCount(); i < n; i++ )
 	{
 		const CPluginList::PLUGIN * Plugin = m_PluginList.GetPluginInfo(i);
@@ -78,13 +74,10 @@ void CGamePluginPage::AddPlugins (int ListId,SettingID Type, PLUGIN_TYPE PluginT
 		}
 		ComboBox->AddItem(Plugin->Info.Name, (WPARAM)Plugin);
 	}
-#endif
 }
 
 void CGamePluginPage::ShowAboutButton ( int id )
 {
-#ifdef tofix
-
 	CModifiedComboBox * ComboBox = NULL;
 	for (ComboBoxList::iterator cb_iter = m_ComboBoxList.begin(); cb_iter != m_ComboBoxList.end(); cb_iter ++)
 	{
@@ -105,13 +98,7 @@ void CGamePluginPage::ShowAboutButton ( int id )
 		return; 
 	}
 	
-	const CPluginList::PLUGIN ** PluginPtr = (const CPluginList::PLUGIN **)ComboBox->GetItemDataPtr(index);
-	if (PluginPtr == NULL)
-	{
-		return;
-	}
-
-	const CPluginList::PLUGIN * Plugin = *PluginPtr;
+	const CPluginList::PLUGIN * Plugin = (const CPluginList::PLUGIN *)ComboBox->GetItemDataPtr(index);
 	if (Plugin == NULL)
 	{
 		return;
@@ -134,12 +121,10 @@ void CGamePluginPage::ShowAboutButton ( int id )
 	DllAbout(m_hWnd);
 
 	FreeLibrary(hLib);
-#endif
 }
 
 void CGamePluginPage::PluginItemChanged ( int id, int AboutID, bool bSetChanged )
 {
-#ifdef tofix
 	CModifiedComboBox * ComboBox = NULL;
 	for (ComboBoxList::iterator cb_iter = m_ComboBoxList.begin(); cb_iter != m_ComboBoxList.end(); cb_iter ++)
 	{
@@ -160,27 +145,20 @@ void CGamePluginPage::PluginItemChanged ( int id, int AboutID, bool bSetChanged 
 	{
 		return; 
 	}
-	const CPluginList::PLUGIN ** PluginPtr = (const CPluginList::PLUGIN **)ComboBox->GetItemDataPtr(index);
-	if (PluginPtr)
+	const CPluginList::PLUGIN * Plugin = (const CPluginList::PLUGIN *)ComboBox->GetItemDataPtr(index);
+	if (Plugin)
 	{
-		const CPluginList::PLUGIN * Plugin = *PluginPtr;
-		if (Plugin)
-		{
-			::EnableWindow(GetDlgItem(AboutID),Plugin->AboutFunction);
-		}
+		::EnableWindow(GetDlgItem(AboutID),Plugin->AboutFunction);
 	}
-
 	if (bSetChanged)
 	{
 		ComboBox->SetChanged(true);
 		SendMessage(GetParent(),PSM_CHANGED,(WPARAM)m_hWnd,0);
 	}
-#endif
 }
 
 void CGamePluginPage::UpdatePageSettings ( void )
 {
-#ifdef tofix
 	UpdateCheckBoxes();
 	for (ComboBoxList::iterator cb_iter = m_ComboBoxList.begin(); cb_iter != m_ComboBoxList.end(); cb_iter ++)
 	{
@@ -212,7 +190,6 @@ void CGamePluginPage::UpdatePageSettings ( void )
 	PluginItemChanged(AUDIO_LIST,AUDIO_ABOUT,false);
 	PluginItemChanged(CONT_LIST,CONT_ABOUT,false);
 	PluginItemChanged(RSP_LIST,RSP_ABOUT,false);
-#endif
 }
 
 void CGamePluginPage::HidePage()
@@ -243,7 +220,6 @@ void CGamePluginPage::ResetPage()
 
 void CGamePluginPage::ApplyComboBoxes ( void )
 {
-#ifdef tofix
 	for (ComboBoxList::iterator cb_iter = m_ComboBoxList.begin(); cb_iter != m_ComboBoxList.end(); cb_iter ++)
 	{
 		CModifiedComboBox * ComboBox = cb_iter->second;
@@ -254,30 +230,20 @@ void CGamePluginPage::ApplyComboBoxes ( void )
 			{
 				return; 
 			}
-
-			const CPluginList::PLUGIN ** PluginPtr = (const CPluginList::PLUGIN **)ComboBox->GetItemDataPtr(index);
-			if (PluginPtr == NULL)
-			{
-				return;
-			}
-
-			const CPluginList::PLUGIN * Plugin = *PluginPtr;
+			const CPluginList::PLUGIN * Plugin = (const CPluginList::PLUGIN *)ComboBox->GetItemDataPtr(index);
 
 			if (Plugin)
 			{
-				if (_Settings->LoadString(cb_iter->first) != Plugin->FileName.c_str())
-				{
-					_Settings->SaveString(cb_iter->first,Plugin->FileName.c_str());
-				}
+				_Settings->SaveString(cb_iter->first,Plugin->FileName.c_str());
 			} else {
 				_Settings->DeleteSetting(cb_iter->first);
 			}
 			switch (cb_iter->first)
 			{
-			case Game_EditPlugin_RSP:   _Settings->SaveBool(Plugin_RSP_Changed,true); break;
-			case Game_EditPlugin_Gfx:   _Settings->SaveBool(Plugin_GFX_Changed,true); break;
-			case Game_EditPlugin_Audio: _Settings->SaveBool(Plugin_AUDIO_Changed,true); break;
-			case Game_EditPlugin_Contr: _Settings->SaveBool(Plugin_CONT_Changed,true); break;
+			case Game_Plugin_RSP:        _Settings->SaveBool(Plugin_RSP_Changed,true); break;
+			case Game_Plugin_Gfx:        _Settings->SaveBool(Plugin_GFX_Changed,true); break;
+			case Game_Plugin_Audio:      _Settings->SaveBool(Plugin_AUDIO_Changed,true); break;
+			case Game_Plugin_Controller: _Settings->SaveBool(Plugin_CONT_Changed,true); break;
 			default:
 				Notify().BreakPoint(__FILE__,__LINE__);
 			}
@@ -288,12 +254,10 @@ void CGamePluginPage::ApplyComboBoxes ( void )
 			ComboBox->SetReset(false);
 		}
 	}
-#endif
 }
 
-bool CGamePluginPage::ResetComboBox ( CModifiedComboBox & ComboBox, SettingID /*Type*/ )
+bool CGamePluginPage::ResetComboBox ( CModifiedComboBox & ComboBox, SettingID Type )
 {
-#ifdef tofix
 	if (!ComboBox.IsChanged())
 	{
 		return false;
@@ -302,23 +266,17 @@ bool CGamePluginPage::ResetComboBox ( CModifiedComboBox & ComboBox, SettingID /*
 	ComboBox.SetReset(true);
 	for (int i = 0, n = ComboBox.GetCount(); i < n; i++)
 	{
-		const CPluginList::PLUGIN ** PluginPtr = (const CPluginList::PLUGIN **)ComboBox.GetItemDataPtr(i);
-		if (PluginPtr == NULL)
-		{
-			continue;
-		}
-		if (*PluginPtr != NULL)
+		if (ComboBox.GetItemDataPtr(i) != NULL)
 		{
 			continue;
 		}
 		ComboBox.SetCurSel(i);
 		return true;
 	}
-#endif
 	return false;
 }
 
-void CGamePluginPage::HleGfxChanged ( UINT /*Code*/, int id, HWND /*ctl*/ )
+void CGamePluginPage::HleGfxChanged ( UINT Code, int id, HWND ctl )
 {
 	for (ButtonList::iterator iter = m_ButtonList.begin(); iter != m_ButtonList.end(); iter ++)
 	{
@@ -342,7 +300,7 @@ void CGamePluginPage::HleGfxChanged ( UINT /*Code*/, int id, HWND /*ctl*/ )
 	}
 }
 
-void CGamePluginPage::HleAudioChanged ( UINT /*Code*/, int id, HWND /*ctl*/ )
+void CGamePluginPage::HleAudioChanged ( UINT Code, int id, HWND ctl )
 {
 	for (ButtonList::iterator iter = m_ButtonList.begin(); iter != m_ButtonList.end(); iter ++)
 	{

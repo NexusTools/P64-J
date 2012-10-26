@@ -86,12 +86,10 @@ void CMipsMemory::AllocateSystemMemory (void)
 	}
 	
 	DWORD RdramMemorySize = 0x20000000;
-#ifdef tofix
-	if ((CPU_TYPE)_Settings->LoadDword(ROM_CPUType) == CPU_SyncCores)
+	if ((CPU_TYPE)_Settings->LoadDword(Game_CpuType) == CPU_SyncCores)
 	{
 		RdramMemorySize = 0x18000000;
 	}
-#endif
 	RDRAM = (unsigned char *) VirtualAlloc( NULL, RdramMemorySize, MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
 	if(RDRAM==NULL) {  
 		_Notify->FatalError(GS(MSG_MEM_ALLOC_ERROR));
@@ -109,8 +107,7 @@ void CMipsMemory::AllocateSystemMemory (void)
 	DMEM  = (unsigned char *)(RDRAM+0x04000000);
 	IMEM  = (unsigned char *)(RDRAM+0x04001000);
 
-#ifdef tofix
-	if (_Settings->LoadDword(RomInMemory))
+	if (_Settings->LoadBool(Game_LoadRomToMemory))
 	{
 		if(VirtualAlloc(RDRAM + 0x10000000, m_RomFileSize, MEM_COMMIT, PAGE_READWRITE)==NULL) {
 			_Notify->FatalError(GS(MSG_MEM_ALLOC_ERROR));
@@ -119,7 +116,6 @@ void CMipsMemory::AllocateSystemMemory (void)
 		ROM = (unsigned char *)(RDRAM+0x10000000);
 		_Rom->UnallocateRomImage();
 	}
-#endif
 	memset(PIF_Ram,0,sizeof(PIF_Ram));
 	TLB_Reset(true);
 }
@@ -133,7 +129,7 @@ bool CMipsMemory::AllocateRecompilerMemory ( bool AllocateJumpTable )
 	JumpTable = NULL;
 	if (AllocateJumpTable)
 	{
-		DWORD JumpTableSize = /*_Settings->LoadDword(RomInMemory) ? 0x20000000 :*/ 0x10000000;
+		DWORD JumpTableSize = _Settings->LoadDword(Game_LoadRomToMemory) ? 0x20000000 : 0x10000000;
 		JumpTable = (void **)VirtualAlloc( NULL, JumpTableSize, MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
 		if( JumpTable == NULL ) {  
 			_Notify->DisplayError(MSG_MEM_ALLOC_ERROR);
@@ -151,15 +147,14 @@ bool CMipsMemory::AllocateRecompilerMemory ( bool AllocateJumpTable )
 			return FALSE;
 		}
 
-#ifdef tofix
-		if (_Settings->LoadDword(RomInMemory))
+		if (_Settings->LoadDword(Game_LoadRomToMemory))
 		{
 			if(VirtualAlloc((BYTE *)JumpTable + 0x10000000, m_RomFileSize, MEM_COMMIT, PAGE_READWRITE)==NULL) {
 				_Notify->DisplayError(MSG_MEM_ALLOC_ERROR);
 				return FALSE;
 			}
 		}
-#endif		
+		
 	}
 
 	/* Recomp code */
@@ -198,7 +193,7 @@ void CMipsMemory::CheckRecompMem( BYTE * RecompPos )
 }
 
 void CMipsMemory::FixRDramSize ( void ) {
-	if (0x400000 /*_Settings->LoadDword(RamSize)*/ != m_AllocatedRdramSize) {
+	if (_Settings->LoadDword(Game_RDRamSize) != m_AllocatedRdramSize) {
 		if (m_AllocatedRdramSize == 0x400000) { 
 			if (VirtualAlloc(RDRAM + 0x400000, 0x400000, MEM_COMMIT, PAGE_READWRITE)==NULL) {
 				_Notify->FatalError(GS(MSG_MEM_ALLOC_ERROR));
@@ -218,25 +213,31 @@ bool CMipsMemory::Store64 ( DWORD VAddr, QWORD Value, MemorySize Size ) {
 			_Notify->BreakPoint(__FILE__,__LINE__);
 			return false;
 		}
-		if (PAddr > 0x400000 /*_Settings->LoadDword(RamSize)*/ && 
+		if (PAddr > _Settings->LoadDword(Game_RDRamSize) && 
 			(PAddr < 0x04000000 || PAddr > 0x04002000))
 		{			
-//			switch (Size) {
-//			case _16Bit: 
-//				if (!StoreHalf_NonMemory(PAddr,static_cast<WORD>(Value))) {
-//					MemoryFilterFailed("Store word",PAddr,PROGRAM_COUNTER, static_cast<WORD>(Value));
-//				}
-//				return true;
-//				break;
-//			case _32Bit: 
-//				if (!StoreWord_NonMemory(PAddr,static_cast<DWORD>(Value))) {
-//					MemoryFilterFailed("Store word",PAddr,PROGRAM_COUNTER, static_cast<DWORD>(Value));
-//				}
-//				return true;
-//				break;
-//			default:
+			switch (Size) {
+			case _8Bit: 
+				if (!StoreByte_NonMemory(PAddr,static_cast<BYTE>(Value))) {
+					//MemoryFilterFailed("Store word",PAddr,PROGRAM_COUNTER, static_cast<WORD>(Value));
+				}
+				return true;
+				break;
+			case _16Bit: 
+				if (!StoreHalf_NonMemory(PAddr,static_cast<WORD>(Value))) {
+					//MemoryFilterFailed("Store word",PAddr,PROGRAM_COUNTER, static_cast<WORD>(Value));
+				}
+				return true;
+				break;
+			case _32Bit: 
+				if (!StoreWord_NonMemory(PAddr,static_cast<DWORD>(Value))) {
+					//MemoryFilterFailed("Store word",PAddr,PROGRAM_COUNTER, static_cast<DWORD>(Value));
+				}
+				return true;
+				break;
+			default:
 				_Notify->BreakPoint(__FILE__,__LINE__);
-//			}
+			}
 			return false;
 		}
 
@@ -361,7 +362,7 @@ bool CMipsMemory::LoadPhysical32 ( DWORD PAddr, DWORD & Variable, MemorySize Siz
 }
 
 void CMipsMemory::MemoryFilterFailed( char * FailureType, DWORD MipsAddress,  DWORD x86Address, DWORD Value) {
-	if (_Settings->LoadDword(ShowUnhandledMemory)) {
+	if (_Settings->LoadDword(Debugger_ShowUnhandledMemory)) {
 		_Notify->DisplayError("Failed to %s\n\nProgram Counter: %X\nMIPS Address: %08X\nX86 Address: %X\n Value: %X",
 			FailureType, _Reg->PROGRAM_COUNTER, MipsAddress, x86Address, Value);
 	}
@@ -378,7 +379,7 @@ bool CMipsMemory::Load64 ( DWORD VAddr, QWORD & Variable, MemorySize Size, bool 
 		if (!TranslateVaddr(VAddr,PAddr)) {
 			return false;
 		}
-		if (PAddr > _Settings->LoadDword(RamSize) && 
+		if (PAddr > _Settings->LoadDword(Game_RDRamSize) && 
 			(PAddr < 0x04000000 || PAddr > 0x04002000))
 		{
 			switch (Size) {
@@ -634,7 +635,7 @@ bool CMipsMemory::Store64 ( DWORD VAddr, QWORD Value, MemorySize Size ) {
 			_Notify->BreakPoint(__FILE__,__LINE__);
 			return false;
 		}
-		if (PAddr > _Settings->LoadDword(RamSize) && 
+		if (PAddr > _Settings->LoadDword(Game_RDRamSize) && 
 			(PAddr < 0x04000000 || PAddr > 0x04002000))
 		{			
 			switch (Size) {
@@ -704,7 +705,7 @@ bool CMipsMemory::StoreByte_NonMemory ( DWORD PAddr, BYTE Value ) {
 	case 0x00500000:
 	case 0x00600000:
 	case 0x00700000:
-		if (PAddr < _Settings->LoadDword(RamSize)) {
+		if (PAddr < _Settings->LoadDword(Game_RDRamSize)) {
 //			CRecompiler * Recomp = _System->GetRecompiler();
 //			if (Recomp) { 
 //				Recomp->ClearRecomplierCode(PAddr + 0x80000000,1);
@@ -732,7 +733,7 @@ bool CMipsMemory::StoreHalf_NonMemory ( DWORD PAddr, WORD Value ) {
 	case 0x00500000:
 	case 0x00600000:
 	case 0x00700000:
-		if (PAddr < _Settings->LoadDword(RamSize)) {
+		if (PAddr < _Settings->LoadDword(Game_RDRamSize)) {
 //			CRecompiler * Recomp = _System->GetRecompiler();
 //			if (Recomp) { 
 //				Recomp->ClearRecomplierCode(PAddr + 0x80000000,1);
@@ -770,7 +771,7 @@ bool CMipsMemory::StoreWord_NonMemory ( DWORD PAddr, DWORD Value ) {
 	case 0x00500000:
 	case 0x00600000:
 	case 0x00700000:
-		if (PAddr < _Settings->LoadDword(RamSize)) {
+		if (PAddr < _Settings->LoadDword(Game_RDRamSize)) {
 //			CRecompiler * Recomp = _System->GetRecompiler();
 //			if (Recomp) { 
 //				Recomp->ClearRecomplierCode(PAddr + 0x80000000,4);
@@ -1149,7 +1150,7 @@ int CMipsMemory::SystemMemoryFilter( DWORD dwExptCode, void * lpExceptionPointer
 		int End = (Start + (lpEP->ContextRecord->Ecx << 2) - 1);
 		
 		if ((int)Start < 0) {  _Notify->BreakPoint(__FILE__,__LINE__); }
-		if ((int)End < 0x400000 /*_Settings->LoadDword(RamSize)*/) {
+		if ((int)End < _Settings->LoadDword(Game_RDRamSize)) {
 			for ( int count = Start & ~0x1000; count < End; count += 0x1000 ) {
 				CBClass->WriteToProtectedMemory(Start, 0xFFF);
 			}			

@@ -6,6 +6,7 @@
 #include "Settings Config.h"
 #include "Settings/Settings Page.h"
 
+
 CSettingConfig::CSettingConfig(bool bJustGameSetting /* = false */)	:
 	m_CurrentPage(NULL),
 	m_GameConfig(bJustGameSetting)
@@ -28,11 +29,11 @@ void CSettingConfig::Display(void * ParentWindow)
 
 LRESULT	CSettingConfig::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
-	stdstr ConfigRomTitle, GameIni(_Settings->LoadString(ROM_IniKey));
+	stdstr ConfigRomTitle, GameIni(_Settings->LoadString(Game_IniKey));
 
 	if (!GameIni.empty())
 	{
-		ConfigRomTitle.Format("Config: %s",_Settings->LoadString(ROM_GoodName).c_str());
+		ConfigRomTitle.Format("Config: %s",_Settings->LoadString(Game_GoodName).c_str());
 	}
 
 	RECT rcSettingInfo;
@@ -47,22 +48,12 @@ LRESULT	CSettingConfig::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 	} else {
 		SetWindowText(GS(OPTIONS_TITLE));
 
-		/*if (_Settings->LoadBool(Setting_PluginPageFirst))
-		{
-			SettingsSection = new CConfigSettingSection(GS(TAB_PLUGIN));
-			SettingsSection->AddPage(new COptionPluginPage(this->m_hWnd,rcSettingInfo ));
-			m_Sections.push_back(SettingsSection);
-		}*/
-
 		SettingsSection = new CConfigSettingSection(GS(TAB_OPTIONS));
-#ifdef tofix
-		SettingsSection->AddPage(new CGeneralOptionsPage(this,this->m_hWnd,rcSettingInfo ));
+		SettingsSection->AddPage(new CGeneralOptionsPage(this->m_hWnd,rcSettingInfo ));
 		SettingsSection->AddPage(new CAdvancedOptionsPage(this->m_hWnd,rcSettingInfo ));
 		SettingsSection->AddPage(new COptionsDirectoriesPage(this->m_hWnd,rcSettingInfo ));
-#endif
 		m_Sections.push_back(SettingsSection);
 
-#ifdef tofix
 		SettingsSection = new CConfigSettingSection(GS(TAB_ROMSELECTION));
 		SettingsSection->AddPage(new COptionsGameBrowserPage(this->m_hWnd,rcSettingInfo ));
 		m_Sections.push_back(SettingsSection);
@@ -74,7 +65,6 @@ LRESULT	CSettingConfig::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 		SettingsSection = new CConfigSettingSection(GS(TAB_PLUGIN));
 		SettingsSection->AddPage(new COptionPluginPage(this->m_hWnd,rcSettingInfo ));
 		m_Sections.push_back(SettingsSection);
-#endif
 	}
 
 	//Game Settings
@@ -84,12 +74,10 @@ LRESULT	CSettingConfig::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*
 		GameSettings->AddPage(new CGameGeneralPage(this->m_hWnd,rcSettingInfo ));
 		GameSettings->AddPage(new CGameRecompilePage(this->m_hWnd,rcSettingInfo ));
 		GameSettings->AddPage(new CGamePluginPage(this->m_hWnd,rcSettingInfo ));
-#ifdef tofix
 		if (_Settings->LoadBool(Setting_RdbEditor))
 		{
 			GameSettings->AddPage(new CGameStatusPage(this->m_hWnd,rcSettingInfo ));
 		}
-#endif
 		m_Sections.push_back(GameSettings);
 	}
 
@@ -142,7 +130,7 @@ LRESULT CSettingConfig::OnClicked (WORD wNotifyCode, WORD wID, HWND , BOOL& bHan
 	case IDCANCEL:
 		EndDialog(0);
 		break;
-	case IDC_RESET_PAGE:
+	case IDC_RESET:
 		if (m_CurrentPage)
 		{
 			m_CurrentPage->ResetPage();
@@ -184,7 +172,7 @@ void CSettingConfig::ApplySettings( bool UpdateScreen )
 	if (UpdateScreen)
 	{
 		::EnableWindow(GetDlgItem(IDAPPLY),false);
-		::EnableWindow(GetDlgItem(IDC_RESET_PAGE), m_CurrentPage->EnableReset());
+		::EnableWindow(GetDlgItem(IDC_RESET), m_CurrentPage->EnableReset());
 	}
 }
 
@@ -202,7 +190,7 @@ LRESULT CSettingConfig::OnPageListItemChanged(NMHDR* phdr)
 		}
 		m_CurrentPage = Page;
 		m_CurrentPage->ShowPage();
-		::EnableWindow(GetDlgItem(IDC_RESET_PAGE), m_CurrentPage->EnableReset());
+		::EnableWindow(GetDlgItem(IDC_RESET), m_CurrentPage->EnableReset());
 	}
 	return 0;   // retval ignored
 }
@@ -210,7 +198,7 @@ LRESULT CSettingConfig::OnPageListItemChanged(NMHDR* phdr)
 LRESULT	CSettingConfig::OnSettingPageChanged ( UINT /*uMsg*/, WPARAM wPage, LPARAM /*lParam*/)
 {
 	::EnableWindow(GetDlgItem(IDAPPLY),true);
-	::EnableWindow(GetDlgItem(IDC_RESET_PAGE), m_CurrentPage->EnableReset());
+	::EnableWindow(GetDlgItem(IDC_RESET), m_CurrentPage->EnableReset());
 	BoldChangedPages(m_PagesTreeList.GetRootItem());
 	return 0;
 }

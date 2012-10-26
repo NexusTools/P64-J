@@ -1,14 +1,12 @@
 #include "../../User Interface.h"
 #include "ModifiedEditBox.h"
 
-CModifiedEditBox::CModifiedEditBox(bool bString /* = true */, HWND hWnd /* = NULL */) :
+CModifiedEditBox::CModifiedEditBox(HWND hWnd) : 
 	CEdit(hWnd),
 	m_Changed(false),
 	m_Reset(false),
 	m_BoldFont(NULL),
-	m_OriginalFont(NULL),
-	m_TextField(NULL),
-	m_bString(bString)
+	m_OriginalFont(NULL)
 { 		
 }
 
@@ -47,22 +45,11 @@ void CModifiedEditBox::SetChanged (bool Changed)
 		}
 		SendMessage(WM_SETFONT,(WPARAM)m_BoldFont);
 		InvalidateRect(NULL);
-		if (m_TextField)
-		{
-			::SendMessage(m_TextField,WM_SETFONT,(WPARAM)m_BoldFont,0);
-			::InvalidateRect(m_TextField, NULL, true);
-				
-		}
 	} else {
 		if (m_OriginalFont)
 		{
 			SendMessage(WM_SETFONT,(WPARAM)m_OriginalFont);
 			InvalidateRect(NULL);
-			if (m_TextField)
-			{
-				::SendMessage(m_TextField,WM_SETFONT,(WPARAM)m_OriginalFont,0);
-				::InvalidateRect(m_TextField, NULL, true);
-			}
 		}
 	}
 }
@@ -80,17 +67,4 @@ stdstr CModifiedEditBox::GetWindowText( void )
 	Result.resize(nLen+1);
 	::GetWindowText(m_hWnd,(char *)Result.c_str(),nLen+1);
 	return Result;
-}
-
-void CModifiedEditBox::SetTextField (HWND hWnd)
-{
-	if (m_TextField && m_OriginalFont)
-	{
-		::SendMessage(m_TextField,WM_SETFONT,(WPARAM)m_OriginalFont,0);
-	}
-	m_TextField = hWnd;
-	if (m_Changed && m_BoldFont)
-	{
-		::SendMessage(m_TextField,WM_SETFONT,(WPARAM)m_BoldFont,0);
-	}
 }

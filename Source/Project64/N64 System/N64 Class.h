@@ -53,11 +53,11 @@ class CN64System :
 	CSpeedLimitor   m_Limitor;
 	bool            m_InReset;
 	SystemType      m_SystemType;
+	bool            m_bCleanFrameBox;
 	
 	//When Syncing cores this is the PC where it last Sync'ed correctly
 	DWORD m_LastSuccessSyncPC[10];
 	int   m_CyclesToSkip;
-	bool  m_SPHack;
 
 	//List of Internal events that need to be acted on by CPU
 	EVENT_LIST    EventList;
@@ -109,6 +109,7 @@ class CN64System :
 	void   CpuStopped      ( void );
 	void   Pause           ( void );
 
+	static void PluginChanged ( CN64System * _this );
 
 	//Function in CMipsMemory_CallBack
 	virtual bool WriteToProtectedMemory (DWORD Address, int length);

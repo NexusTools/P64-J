@@ -14,41 +14,40 @@ CGameGeneralPage::CGameGeneralPage (HWND hParent, const RECT & rcDispay )
 		return;
 	}
 
-#ifdef tofix
-	AddModCheckBox(GetDlgItem(IDC_ROM_32BIT),ROM_32Bit);
-	AddModCheckBox(GetDlgItem(IDC_SYNC_AUDIO),ROM_SyncViaAudio);
-#endif
-	AddModCheckBox(GetDlgItem(IDC_ROM_FIXEDAUDIO),ROM_FixedAudio);
-	AddModCheckBox(GetDlgItem(IDC_USE_TLB),ROM_UseTlb);
-#ifdef tofix
-	AddModCheckBox(GetDlgItem(IDC_DELAY_DP),ROM_DelayDP);
-#endif
-	AddModCheckBox(GetDlgItem(IDC_DELAY_SI),ROM_DelaySI);
-#ifdef tofix
-	AddModCheckBox(GetDlgItem(IDC_AUDIO_SIGNAL),ROM_RspAudioSignal);
-#endif
+	AddModCheckBox(GetDlgItem(IDC_SYNC_AUDIO),Game_SyncViaAudio);
+	AddModCheckBox(GetDlgItem(IDC_ROM_SPHACK),Game_SPHack);
+	AddModCheckBox(GetDlgItem(IDC_ROM_FIXEDAUDIO),Game_FixedAudio);
+	AddModCheckBox(GetDlgItem(IDC_USE_TLB),Game_UseTlb);
+	AddModCheckBox(GetDlgItem(IDC_DELAY_SI),Game_DelaySI);
+	AddModCheckBox(GetDlgItem(IDC_AUDIO_SIGNAL),Game_RspAudioSignal);
 
 	CModifiedComboBox * ComboBox;
-	ComboBox = AddModComboBox(GetDlgItem(IDC_RDRAM_SIZE),ROM_RamSize);
+	ComboBox = AddModComboBox(GetDlgItem(IDC_RDRAM_SIZE),Game_RDRamSize);
 	if (ComboBox)
 	{
 		ComboBox->SetTextField(GetDlgItem(IDC_MEMORY_SIZE_TEXT));
-		ComboBox->AddItem(GS(RDRAM_4MB), 0x400000 );
-		ComboBox->AddItem(GS(RDRAM_8MB), 0x800000 );
+		if (_Settings->LoadBool(Setting_RdbEditor))
+		{
+			ComboBox->AddItem(GS(RDRAM_4MB), 4 );
+			ComboBox->AddItem(GS(RDRAM_8MB), 8 );
+		} else {
+			ComboBox->AddItem(GS(RDRAM_4MB), 0x400000 );
+			ComboBox->AddItem(GS(RDRAM_8MB), 0x800000 );
+		}
 	}
 
-	ComboBox = AddModComboBox(GetDlgItem(IDC_SAVE_TYPE),ROM_SaveChip);
+	ComboBox = AddModComboBox(GetDlgItem(IDC_SAVE_TYPE),Game_SaveChip);
 	if (ComboBox)
 	{
 		ComboBox->SetTextField(GetDlgItem(IDC_SAVE_TYPE_TEXT));
-		ComboBox->AddItem(GS(SAVE_FIRST_USED), (WPARAM)SaveChip_Auto );
+		ComboBox->AddItem(GS(SAVE_FIRST_USED), SaveChip_Auto );
 		ComboBox->AddItem(GS(SAVE_4K_EEPROM),  SaveChip_Eeprom_4K );
 		ComboBox->AddItem(GS(SAVE_16K_EEPROM), SaveChip_Eeprom_16K );
 		ComboBox->AddItem(GS(SAVE_SRAM),       SaveChip_Sram );
 		ComboBox->AddItem(GS(SAVE_FLASHRAM),   SaveChip_FlashRam );
 	}
 
-	ComboBox = AddModComboBox(GetDlgItem(IDC_COUNTFACT),ROM_CounterFactor);
+	ComboBox = AddModComboBox(GetDlgItem(IDC_COUNTFACT),Game_CounterFactor);
 	if (ComboBox)
 	{
 		ComboBox->SetTextField(GetDlgItem(IDC_COUNTFACT_TEXT));
@@ -60,12 +59,7 @@ CGameGeneralPage::CGameGeneralPage (HWND hParent, const RECT & rcDispay )
 		ComboBox->AddItem(GS(NUMBER_6), 6 );
 	}
 
-	SetDlgItemText(IDC_GOOD_NAME,_Settings->LoadString(ROM_GoodName).c_str());
-
-#ifdef tofix
-	CModifiedEditBox * TxtBox = AddModTextBox(GetDlgItem(IDC_VIREFRESH),ROM_ViRefreshRate, false);
-	TxtBox->SetTextField(GetDlgItem(IDC_VIREFESH_TEXT));
-#endif
+	SetDlgItemText(IDC_GOOD_NAME,_Settings->LoadString(Game_GoodName).c_str());
 
 	UpdatePageSettings();
 }

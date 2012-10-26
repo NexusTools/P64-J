@@ -8,8 +8,9 @@
 
 #undef PROGRAM_COUNTER
 #undef RdramSize
-
-#define LinkBlocks
+#undef LookUpMode
+#undef LinkBlocks
+#undef CountPerOp
 
 CRecompiler::CRecompiler(CMipsMemory * MMU, CProfiling & Profile, bool & EndEmulation, bool SyncSystem) :
 	_MMU(MMU),
@@ -18,12 +19,6 @@ CRecompiler::CRecompiler(CMipsMemory * MMU, CProfiling & Profile, bool & EndEmul
 	PROGRAM_COUNTER(_Reg->PROGRAM_COUNTER),
 	m_EndEmulation(EndEmulation),
 	m_SyncSystem(SyncSystem),
-	m_LookUpMode(FuncFind_PhysicalLookup/*(FUNC_LOOKUP_METHOD)_Settings->LoadDword(FuncLookupMode)*/),
-	m_LinkBlocks(false /*_Settings->LoadDword(BlockLinking) != 0*/),
-	m_DisableRegCaching(false /*_Settings->LoadDword(ROM_RegCache) == 0*/),
-	m_RdramSize(0x400000 /*_Settings->LoadDword(RamSize)*/),
-	m_CountPerOp(2/*_Settings->LoadDword(CounterFactor)*/),
-	m_ValidateFuncs(false /*_Settings->LoadDword(SMM_ValidFunc) != 0*/),
 	m_Functions(),
 	m_FunctionsDelaySlot()
 {
@@ -43,7 +38,7 @@ void CRecompiler::Run()
 		Start_x86_Log();
 	}
 
-	if (!g_MMU->AllocateRecompilerMemory(m_LookUpMode != FuncFind_VirtualLookup && m_LookUpMode != FuncFind_ChangeMemory)) 
+	if (!g_MMU->AllocateRecompilerMemory(LookUpMode() != FuncFind_VirtualLookup && LookUpMode() != FuncFind_ChangeMemory)) 
 	{ 
 		return; 
 	}
@@ -54,16 +49,16 @@ void CRecompiler::Run()
 	m_EndEmulation = false;
 
 	__try {
-		if (m_LookUpMode == FuncFind_VirtualLookup)
+		if (LookUpMode() == FuncFind_VirtualLookup)
 		{
-			if (m_ValidateFuncs)
+			if (bSMM_ValidFunc())
 			{
 				RecompilerMain_VirtualTable_validate();
 			} else {
 				RecompilerMain_VirtualTable();
 			}
 		}
-		else if (m_LookUpMode == FuncFind_ChangeMemory) 
+		else if (LookUpMode() == FuncFind_ChangeMemory) 
 		{
 			RecompilerMain_ChangeMemory();
 		} 
@@ -269,7 +264,7 @@ void CRecompiler::RecompilerMain_VirtualTable_validate ( void )
 					break;
 				}
 			} 
-			if (m_ValidateFuncs)
+			if (bSMM_ValidFunc())
 			{
 				if ((*Info->MemLocation[0] != Info->MemContents[0]) ||
 					(*Info->MemLocation[1] != Info->MemContents[1])) 
@@ -301,7 +296,7 @@ void CRecompiler::RecompilerMain_VirtualTable_validate ( void )
 				break;
 			}
 		} 
-		if (m_ValidateFuncs)
+		if (bSMM_ValidFunc())
 		{
 			if ((*Info->MemLocation[0] != Info->MemContents[0]) ||
 				(*Info->MemLocation[1] != Info->MemContents[1])) 
@@ -357,7 +352,7 @@ void CRecompiler::RecompilerMain_Lookup( void )
 					break;
 				}
 			} 
-			if (m_ValidateFuncs)
+			if (bSMM_ValidFunc())
 			{
 				if ((*Info->MemLocation[0] != Info->MemContents[0]) ||
 					(*Info->MemLocation[1] != Info->MemContents[1])) 
@@ -380,7 +375,7 @@ void CRecompiler::RecompilerMain_Lookup( void )
 		__try {
 			if (Addr > 0x10000000)
 			{
-				if (bRomInMemory)
+				if (bRomInMemory())
 				{
 					if (Addr > 0x20000000)
 					{
@@ -431,7 +426,7 @@ void CRecompiler::RecompilerMain_Lookup( void )
 //				VirtualProtect(N64MEM + Addr, 4, PAGE_READONLY, &OldProtect);
 //			}
 		}
-		if (m_ValidateFuncs)
+		if (bSMM_ValidFunc())
 		{
 			if ((*Info->MemLocation[0] != Info->MemContents[0]) ||
 				(*Info->MemLocation[1] != Info->MemContents[1])) 
@@ -481,7 +476,7 @@ void CRecompiler::ResetRecompCode()
 		memset(JumpTable,0,g_MMU->RdramSize());
 		memset(JumpTable + (0x04000000 >> 2),0,0x1000);
 		memset(JumpTable + (0x04001000 >> 2),0,0x1000);
-		if (bRomInMemory)
+		if (bRomInMemory())
 		{
 			memset(JumpTable + (0x10000000 >> 2),0,RomFileSize);
 		}
@@ -561,7 +556,7 @@ FUNCTION_INFO * CRecompiler::CompileDelaySlot(DWORD PC)
 	{
 		return NULL;
 	}
-	if (StartAddress < m_RdramSize) {
+	if (StartAddress < RdramSize()) {
 		CPU_Message("====== RDRAM: Delay Slot ======");
 	} else if (StartAddress >= 0x04000000 && StartAddress <= 0x04000FFC) {
 		CPU_Message("====== DMEM: Delay Slot ======");
@@ -577,7 +572,7 @@ FUNCTION_INFO * CRecompiler::CompileDelaySlot(DWORD PC)
 	CPU_Message("====== recompiled code ======");
 
 	Section->AddParent(NULL);
-	Section->BlockCycleCount() += CountPerOp;
+	Section->BlockCycleCount() += CountPerOp();
 	Section->BlockRandomModifier() += 1;
 			
 	switch (Opcode.op) {
@@ -740,7 +735,7 @@ FUNCTION_INFO * CRecompiler::CompileDelaySlot(DWORD PC)
 
 bool CRecompiler::AnalyseBlock ( CBlockInfo & BlockInfo) 
 {
-	if (m_LinkBlocks)
+	if (bLinkBlocks())
 	{ 	
 		CBlockSection * Section = &BlockInfo.ParentSection;
 		if (!CreateSectionLinkage (Section)) { return false; }
@@ -1859,13 +1854,13 @@ bool CRecompiler::Compiler4300iBlock(FUNCTION_INFO * info) {
 	DWORD StartTime = timeGetTime();
 	WriteTraceF(TraceRecompiler,"Compile Block-Start: %X-%X",info->VStartPC(),info->VEndPC());
 	
-	if (bProfiling)    { m_Profile.StartTimer(Timer_GetBlockInfo); }
+	if (bProfiling())    { m_Profile.StartTimer(Timer_GetBlockInfo); }
 	
 	CBlockInfo BlockInfo(PROGRAM_COUNTER, RecompPos);
-	if (bProfiling)    { m_Profile.StartTimer(Timer_AnalyseBlock); }
+	if (bProfiling())    { m_Profile.StartTimer(Timer_AnalyseBlock); }
 	if (!AnalyseBlock(BlockInfo)) { return false; }
 
-	if (bProfiling)    { m_Profile.StartTimer(Timer_CompileBlock); }
+	if (bProfiling())    { m_Profile.StartTimer(Timer_CompileBlock); }
 	DWORD StartAddress;
 	if (!_MMU->TranslateVaddr(BlockInfo.StartVAddr,StartAddress))
 	{
@@ -1874,7 +1869,7 @@ bool CRecompiler::Compiler4300iBlock(FUNCTION_INFO * info) {
 	}
 
 /*	MarkCodeBlock(StartAddress);
-	if (StartAddress < m_RdramSize) {
+	if (StartAddress < RdramSize()) {
 		CPU_Message("====== RDRAM: block (%X:%d) ======", StartAddress>>12,N64_Blocks.NoOfRDRamBlocks[StartAddress>>12]);
 	} else if (StartAddress >= 0x04000000 && StartAddress <= 0x04000FFC) {
 		CPU_Message("====== DMEM: block (%d) ======", N64_Blocks.NoOfDMEMBlocks);
@@ -1894,7 +1889,7 @@ bool CRecompiler::Compiler4300iBlock(FUNCTION_INFO * info) {
 	CPU_Message("Start of Block: %X",BlockInfo.StartVAddr );
 	CPU_Message("No of Sections: %d",BlockInfo.NoOfSections );
 	CPU_Message("====== recompiled code ======");
-	if (m_LinkBlocks) {
+	if (bLinkBlocks()) {
 		for (int count = 0; count < BlockInfo.NoOfSections; count ++) {
 			DisplaySectionInformation(&BlockInfo.ParentSection,count + 1,CBlockSection::GetNewTestValue());
 		}
@@ -1906,7 +1901,7 @@ bool CRecompiler::Compiler4300iBlock(FUNCTION_INFO * info) {
 	
 	BlockInfo.ParentSection.RegStart.Initilize();
 	BlockInfo.ParentSection.RegWorking = BlockInfo.ParentSection.RegStart;
-	if (m_LinkBlocks) {
+	if (bLinkBlocks()) {
 		while (GenerateX86Code(BlockInfo,&BlockInfo.ParentSection,CBlockSection::GetNewTestValue()));
 	} else {
 		GenerateX86Code(BlockInfo,&BlockInfo.ParentSection,CBlockSection::GetNewTestValue());
@@ -1914,7 +1909,7 @@ bool CRecompiler::Compiler4300iBlock(FUNCTION_INFO * info) {
 	CompileExitCode(BlockInfo);
 	
 	CPU_Message("====== End of recompiled code ======");
-	if (bProfiling)    { m_Profile.StartTimer(Timer_CompileDone); }
+	if (bProfiling())    { m_Profile.StartTimer(Timer_CompileDone); }
 
 	info->SetVEndPC(BlockInfo.EndVAddr);
 	info->SetFunctionAddr(BlockInfo.CompiledLocation);
@@ -1922,13 +1917,13 @@ bool CRecompiler::Compiler4300iBlock(FUNCTION_INFO * info) {
 	info->MemLocation[1] = info->MemLocation[0] + 1;
 	info->MemContents[0] = *info->MemLocation[0];
 	info->MemContents[1] = *info->MemLocation[1];
-	if (bSMM_Protect)
+	if (bSMM_Protect())
 	{
 		_MMU->ProtectMemory(info->VStartPC(),info->VEndPC());
 	}
 	NextInstruction = NORMAL;
 
-	if (bShowRecompMemSize) 
+	if (bShowRecompMemSize()) 
 	{
 		DWORD Size = RecompPos - RecompCode;
 		DWORD MB = Size / 0x100000;
@@ -1940,7 +1935,7 @@ bool CRecompiler::Compiler4300iBlock(FUNCTION_INFO * info) {
 		
 		DisplayMessage(0,"Memory used: %d mb %-3d kb %-3d bytes     Total Available: %d mb",MB,KB,Size, TotalAvaliable);
 	}
-	if (bProfiling)    { m_Profile.StopTimer(); }
+	if (bProfiling())    { m_Profile.StopTimer(); }
 
 	DWORD TimeTaken = timeGetTime() - StartTime;
 	WriteTraceF(TraceRecompiler,"Compile Block-Done: %X-%X  - Taken: %d",info->VStartPC(),info->VEndPC(),TimeTaken);
@@ -2608,7 +2603,7 @@ bool CRecompiler::GenerateX86Code(CBlockInfo & BlockInfo, CBlockSection * Sectio
 		{
 			Section->BlockInfo->EndVAddr = Section->CompilePC;
 		}
-		Section->BlockCycleCount() += m_CountPerOp;
+		Section->BlockCycleCount() += CountPerOp();
 		//CPU_Message("BlockCycleCount = %d",BlockCycleCount);
 		Section->BlockRandomModifier() += 1;
 		//CPU_Message("BlockRandomModifier = %d",BlockRandomModifier);
@@ -2850,7 +2845,7 @@ bool CRecompiler::GenerateX86Code(CBlockInfo & BlockInfo, CBlockSection * Sectio
 			Compile_R4300i_UnknownOpcode(Section); break;
 		}
 
-		if (m_DisableRegCaching) { WriteBackRegisters(Section); }
+		if (!bRegCaching()) { WriteBackRegisters(Section); }
 		Section->ResetX86Protection();
 		
 		/*if ((DWORD)RecompPos > 0x60B452E6) {
@@ -2907,7 +2902,7 @@ bool CRecompiler::GenerateX86Code(CBlockInfo & BlockInfo, CBlockSection * Sectio
 			break;
 		case DELAY_SLOT:
 			NextInstruction = DELAY_SLOT_DONE;
-			Section->BlockCycleCount() -= m_CountPerOp;
+			Section->BlockCycleCount() -= CountPerOp();
 			Section->BlockRandomModifier() -= 1;
 			Section->CompilePC -= 4; 
 			break;
@@ -2975,7 +2970,7 @@ void CRecompiler::CompileExit ( CBlockSection * Section, DWORD JumpPC, DWORD Tar
 #ifdef LinkBlocks
 		if (bSMM_ValidFunc == false)
 		{
-			if (LookUpMode == FuncFind_ChangeMemory) 
+			if (LookUpMode() == FuncFind_ChangeMemory) 
 			{
 				BreakPoint(__FILE__,__LINE__);
 	//			BYTE * Jump, * Jump2;
@@ -3010,7 +3005,7 @@ void CRecompiler::CompileExit ( CBlockSection * Section, DWORD JumpPC, DWORD Tar
 	//				*((BYTE *)(Jump2))=(BYTE)(RecompPos - Jump2 - 1);
 	//			}
 			} 
-			else if (LookUpMode == FuncFind_VirtualLookup)
+			else if (LookUpMode() == FuncFind_VirtualLookup)
 			{			
 				MoveConstToX86reg(TargetPC,x86_EDX);
 				MoveConstToX86reg((DWORD)&m_Functions,x86_ECX);		
@@ -3023,7 +3018,7 @@ void CRecompiler::CompileExit ( CBlockSection * Section, DWORD JumpPC, DWORD Tar
 				CPU_Message("      NullPointer:");
 				*((BYTE *)(Jump))=(BYTE)(RecompPos - Jump - 1);
 			}
-			else if (LookUpMode == FuncFind_PhysicalLookup) 
+			else if (LookUpMode() == FuncFind_PhysicalLookup) 
 			{
 				BYTE * Jump2 = NULL;
 				if (TargetPC >= 0x80000000 && TargetPC < 0x90000000) {
@@ -3378,7 +3373,7 @@ void SyncRegState (CBlockSection * Section, CRegInfo * SyncTo) {
 	}
 }
 
-void GenerateSectionLinkage (CBlockSection * Section) {
+void CRecompiler::GenerateSectionLinkage (CBlockSection * Section) {
 	CBlockSection ** TargetSection[2];
 	CJumpInfo * JumpInfo[2];
 	BYTE * Jump;
@@ -3448,10 +3443,10 @@ void GenerateSectionLinkage (CBlockSection * Section) {
 CPU_Message("PermLoop *** a");
 				MoveConstToVariable(Section->CompilePC,g_PROGRAM_COUNTER,"PROGRAM_COUNTER");
 				WriteBackRegisters(Section); 
-				Section->RegWorking.BlockCycleCount() -= CountPerOp;
+				Section->RegWorking.BlockCycleCount() -= CountPerOp();
 				g_N64System->GetRecompiler()->UpdateCounters(&Section->RegWorking.BlockCycleCount(),&Section->RegWorking.BlockRandomModifier(), false);
 				Call_Direct(InPermLoop,"InPermLoop");
-				Section->RegWorking.BlockCycleCount() += CountPerOp;
+				Section->RegWorking.BlockCycleCount() += CountPerOp();
 				g_N64System->GetRecompiler()->UpdateCounters(&Section->RegWorking.BlockCycleCount(),&Section->RegWorking.BlockRandomModifier(), true);
 				g_N64System->GetRecompiler()->CompileSystemCheck(-1,Section->RegWorking);
 
@@ -3522,10 +3517,10 @@ CPU_Message("PermLoop *** a");
 				if (JumpInfo[count]->PermLoop) {
 CPU_Message("PermLoop *** 1");
 					MoveConstToVariable(JumpInfo[count]->TargetPC,g_PROGRAM_COUNTER,"PROGRAM_COUNTER");
-					JumpInfo[count]->RegSet.BlockCycleCount() -= CountPerOp;
+					JumpInfo[count]->RegSet.BlockCycleCount() -= CountPerOp();
 					g_N64System->GetRecompiler()->UpdateCounters(&JumpInfo[count]->RegSet.BlockCycleCount(),&JumpInfo[count]->RegSet.BlockRandomModifier(), false);
 					Call_Direct(InPermLoop,"InPermLoop");
-					JumpInfo[count]->RegSet.BlockCycleCount() += CountPerOp;
+					JumpInfo[count]->RegSet.BlockCycleCount() += CountPerOp();
 					g_N64System->GetRecompiler()->UpdateCounters(&JumpInfo[count]->RegSet.BlockCycleCount(),&JumpInfo[count]->RegSet.BlockRandomModifier(), true);
 					g_N64System->GetRecompiler()->CompileSystemCheck(-1,JumpInfo[count]->RegSet);
 				} else {
@@ -3558,10 +3553,10 @@ CPU_Message("PermLoop *** 1");
 			if (JumpInfo[count]->PermLoop) {
 				CPU_Message("PermLoop *** 2");
 				MoveConstToVariable(JumpInfo[count]->TargetPC,g_PROGRAM_COUNTER,"PROGRAM_COUNTER");
-				JumpInfo[count]->RegSet.BlockCycleCount() -= CountPerOp;
+				JumpInfo[count]->RegSet.BlockCycleCount() -= CountPerOp();
 				g_N64System->GetRecompiler()->UpdateCounters(&JumpInfo[count]->RegSet.BlockCycleCount(),&JumpInfo[count]->RegSet.BlockRandomModifier(), false);
 				Call_Direct(InPermLoop,"InPermLoop");
-				JumpInfo[count]->RegSet.BlockCycleCount() += CountPerOp;
+				JumpInfo[count]->RegSet.BlockCycleCount() += CountPerOp();
 				g_N64System->GetRecompiler()->UpdateCounters(&JumpInfo[count]->RegSet.BlockCycleCount(),&JumpInfo[count]->RegSet.BlockRandomModifier(), true);
 				g_N64System->GetRecompiler()->CompileSystemCheck(-1,JumpInfo[count]->RegSet);
 			}
@@ -3700,7 +3695,7 @@ void CRecompiler::RemoveFunction (FUNCTION_INFO * FunInfo, bool DelaySlot, REMOV
 	}
 
 	//if no more functions in this block then unprotect the memory
-	if (bSMM_Protect) 
+	if (bSMM_Protect()) 
 	{
 		for (DWORD Addr = StartBlock; Addr <= EndBlock; Addr += 0x1000 ){
 			FUNCTION_INFO * info = m_Functions.FindFunction(Addr,0xFFF);
@@ -3729,7 +3724,7 @@ bool CRecompiler::ClearRecompCode_Phys(DWORD Address, int length, REMOVE_REASON 
 			}
 		}
 	}
-	if (LookUpMode == FuncFind_PhysicalLookup) 
+	if (LookUpMode() == FuncFind_PhysicalLookup) 
 	{
 		WriteTraceF(TraceRecompiler,"Reseting Jump Table, Addr: %X  len: %d",Address,((length + 3) & ~3));
 		memset((BYTE *)JumpTable + Address,0,((length + 3) & ~3));
@@ -3758,7 +3753,7 @@ bool CRecompiler::ClearRecompCode_Virt(DWORD Address, int length,REMOVE_REASON R
 		}
 	} while (info != NULL);
 
-	if (bSMM_Protect)
+	if (bSMM_Protect())
 	{
 		DWORD Start = Address  & ~0xFFF;
 		info = m_Functions.FindFunction(Start,0xFFF);

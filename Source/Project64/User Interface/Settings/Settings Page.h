@@ -18,24 +18,14 @@ class CSettingsPageImpl :
 	public CDialogImpl<T>
 {
 protected:
-	typedef std::map<SettingID,CModifiedEditBox *>     TextBoxList;
-	typedef std::map<SettingID,CModifiedButton *>      ButtonList;
-	typedef std::map<SettingID,CModifiedComboBox *>    ComboBoxList;
-	typedef std::map<SettingID,CModifiedComboBoxTxt *> ComboBoxTxtList;
+	typedef std::map<SettingID,CModifiedButton *>   ButtonList;
+	typedef std::map<SettingID,CModifiedComboBox *> ComboBoxList;
 
 	virtual ~CSettingsPageImpl()
 	{
-		for (TextBoxList::iterator eb_iter = m_TxtBoxList.begin(); eb_iter != m_TxtBoxList.end(); eb_iter ++)
-		{
-			delete eb_iter->second;
-		}
 		for (ButtonList::iterator iter = m_ButtonList.begin(); iter != m_ButtonList.end(); iter ++)
 		{
 			delete iter->second;
-		}
-		for (ComboBoxTxtList::iterator cbtxt_iter = m_ComboBoxTxtList.begin(); cbtxt_iter != m_ComboBoxTxtList.end(); cbtxt_iter ++)
-		{
-			delete cbtxt_iter->second;
 		}
 		for (ComboBoxList::iterator cb_iter = m_ComboBoxList.begin(); cb_iter != m_ComboBoxList.end(); cb_iter ++)
 		{
@@ -51,7 +41,6 @@ protected:
 			return false;
 		}
 		SetWindowPos(HWND_TOP,&rcDispay,SWP_HIDEWINDOW);
-		m_UpdatingTxt = false;
 		return true;
 	}
 
@@ -70,29 +59,6 @@ protected:
 		}
 	}
 	
-	void UpdateModEditBox ( CModifiedEditBox & EditBox, SettingID Type )
-	{
-		if (EditBox.IsChanged())
-		{
-			stdstr Value = EditBox.GetWindowText();
-			if (EditBox.IsbString())
-			{
-				_Settings->SaveString(Type,Value);
-			} else {
-				DWORD dwValue = atoi(Value.c_str());
-				_Settings->SaveDword(Type,dwValue);
-			}
-		}
-		if (EditBox.IsReset())
-		{
-#ifdef tofix
-			_Settings->DeleteSetting(Type);
-#endif
-			EditBox.SetReset(false);
-		}
-	}
-
-
 	void UpdateModCheckBox ( CModifiedButton & CheckBox, SettingID Type )
 	{
 		if (CheckBox.IsChanged())
@@ -105,9 +71,7 @@ protected:
 		}
 		if (CheckBox.IsReset())
 		{
-#ifdef tofix
 			_Settings->DeleteSetting(Type);
-#endif
 			CheckBox.SetReset(false);
 		}
 	}
@@ -119,48 +83,10 @@ protected:
 			return false;
 		}
 
-		bool Value = _Settings->LoadBool(Type);
+		bool Value = _Settings->LoadDefaultBool(Type);
 		CheckBox.SetReset(true);
 		CheckBox.SetCheck(Value ? BST_CHECKED : BST_UNCHECKED);
 		return true;
-	}
-
-	bool ResetEditBox ( CModifiedEditBox & EditBox, SettingID Type )
-	{
-		if (!EditBox.IsChanged())
-		{
-			return false;
-		}
-
-		if (EditBox.IsbString())
-		{
-			stdstr Value = _Settings->LoadString(Type);
-			EditBox.SetWindowText(Value.c_str());
-			EditBox.SetReset(true);
-		} else {
-			DWORD Value = _Settings->LoadDword(Type);
-			EditBox.SetWindowText(stdstr_f("%d",Value).c_str());
-			EditBox.SetReset(true);
-		}
-		return true;
-	}
-
-	CModifiedEditBox * AddModTextBox ( HWND hWnd, SettingID Type, bool bString )
-	{
-		TextBoxList::iterator item = m_TxtBoxList.find(Type);
-		if (item == m_TxtBoxList.end())
-		{
-			CModifiedEditBox * EditBox = new CModifiedEditBox(bString);
-			if (EditBox == NULL)
-			{
-				return NULL;
-			}
-			EditBox->Attach(hWnd);
-
-			m_TxtBoxList.insert(TextBoxList::value_type(Type,EditBox));
-			return EditBox;
-		}
-		return NULL;
 	}
 
 	void AddModCheckBox ( HWND hWnd, SettingID Type )
@@ -197,24 +123,6 @@ protected:
 		return ComboBox;
 	}
 
-	CModifiedComboBoxTxt * AddModComboBoxTxt ( HWND hWnd, SettingID Type )
-	{
-		ComboBoxTxtList::iterator item = m_ComboBoxTxtList.find(Type);
-		if (item != m_ComboBoxTxtList.end())
-		{
-			return item->second;
-		}
-
-		CModifiedComboBoxTxt * ComboBox = new CModifiedComboBoxTxt;
-		if (ComboBox == NULL)
-		{
-			return NULL;
-		}
-		ComboBox->Attach(hWnd);
-		m_ComboBoxTxtList.insert(ComboBoxTxtList::value_type(Type,ComboBox));
-		return ComboBox;
-	}
-
 	void UpdateCheckBoxes ( void )
 	{
 		for (ButtonList::iterator iter = m_ButtonList.begin(); iter != m_ButtonList.end(); iter ++)
@@ -230,15 +138,6 @@ protected:
 
 	void UpdateComboBoxes ( void)
 	{
-		for (ComboBoxTxtList::iterator cbtxt_iter = m_ComboBoxTxtList.begin(); cbtxt_iter != m_ComboBoxTxtList.end(); cbtxt_iter ++)
-		{
-			CModifiedComboBoxTxt * ComboBox = cbtxt_iter->second;
-			stdstr SelectedValue;
-			
-			ComboBox->SetChanged(_Settings->LoadString(cbtxt_iter->first,SelectedValue));
-			ComboBox->SetDefault(SelectedValue);
-		}
-
 		for (ComboBoxList::iterator cb_iter = m_ComboBoxList.begin(); cb_iter != m_ComboBoxList.end(); cb_iter ++)
 		{
 			CModifiedComboBox * ComboBox = cb_iter->second;
@@ -249,47 +148,14 @@ protected:
 		}
 	}
 
-	void UpdateTextBoxes ( void)
-	{
-		for (TextBoxList::iterator iter = m_TxtBoxList.begin(); iter != m_TxtBoxList.end(); iter ++)
-		{
-			CModifiedEditBox * TextBox = iter->second;
-			
-			m_UpdatingTxt = true;
-			if (TextBox->IsbString())
-			{
-				stdstr SelectedValue;
-				TextBox->SetChanged(_Settings->LoadString(iter->first,SelectedValue));
-				TextBox->SetWindowText(SelectedValue.c_str());
-			} else {
-				DWORD SelectedValue;
-				TextBox->SetChanged(_Settings->LoadDword(iter->first,SelectedValue));
-				TextBox->SetWindowText(stdstr_f("%d",SelectedValue).c_str());
-			}
-			m_UpdatingTxt = false;
-		}
-	}
-
 	virtual void UpdatePageSettings ( void )
 	{
 		UpdateCheckBoxes();
 		UpdateComboBoxes();
-		UpdateTextBoxes();
 	}
 
-	void ComboBoxChanged ( UINT /*Code*/, int id, HWND /*ctl*/ )
+	void ComboBoxChanged ( UINT Code, int id, HWND ctl )
 	{
-		for (ComboBoxTxtList::iterator cbtxt_iter = m_ComboBoxTxtList.begin(); cbtxt_iter != m_ComboBoxTxtList.end(); cbtxt_iter ++)
-		{
-			CModifiedComboBoxTxt * ComboBox = cbtxt_iter->second;
-			if ((int)ComboBox->GetMenu() != id)
-			{
-				continue;
-			}
-			ComboBox->SetChanged(true);
-			SendMessage(GetParent(),PSM_CHANGED,(WPARAM)m_hWnd,0);
-			break;
-		}
 		for (ComboBoxList::iterator cb_iter = m_ComboBoxList.begin(); cb_iter != m_ComboBoxList.end(); cb_iter ++)
 		{
 			CModifiedComboBox * ComboBox = cb_iter->second;
@@ -298,26 +164,6 @@ protected:
 				continue;
 			}
 			ComboBox->SetChanged(true);
-			SendMessage(GetParent(),PSM_CHANGED,(WPARAM)m_hWnd,0);
-			break;
-		}
-	}
-
-	void EditBoxChanged ( UINT /*Code*/, int id, HWND /*ctl*/ )
-	{
-		if (m_UpdatingTxt)
-		{
-			return;
-		}
-
-		for (TextBoxList::iterator eb_iter = m_TxtBoxList.begin(); eb_iter != m_TxtBoxList.end(); eb_iter ++)
-		{
-			CModifiedEditBox * EditBox = eb_iter->second;
-			if ((int)EditBox->GetMenu() != id)
-			{
-				continue;
-			}
-			EditBox->SetChanged(true);
 			SendMessage(GetParent(),PSM_CHANGED,(WPARAM)m_hWnd,0);
 			break;
 		}
@@ -331,31 +177,10 @@ protected:
 		}
 
 		ComboBox.SetReset(true);
-		DWORD Value = _Settings->LoadDword(Type);
+		DWORD Value = _Settings->LoadDefaultDword(Type);
 		for (int i = 0, n = ComboBox.GetCount(); i < n; i++)
 		{
-			if (*((WPARAM *)ComboBox.GetItemData(i)) != Value)
-			{
-				continue;
-			}
-			ComboBox.SetCurSel(i);
-			return true;
-		}
-		return false;
-	}
-
-	virtual bool ResetComboBoxTxt ( CModifiedComboBoxTxt & ComboBox, SettingID Type )
-	{
-		if (!ComboBox.IsChanged())
-		{
-			return false;
-		}
-
-		ComboBox.SetReset(true);
-		stdstr Value = _Settings->LoadString(Type);
-		for (int i = 0, n = ComboBox.GetCount(); i < n; i++)
-		{
-			if (*((stdstr *)ComboBox.GetItemData(i)) != Value)
+			if (ComboBox.GetItemData(i) != Value)
 			{
 				continue;
 			}
@@ -374,45 +199,16 @@ protected:
 			{
 				return; 
 			}
-			_Settings->SaveDword(Type,*(DWORD *)ComboBox.GetItemData(index));
+			_Settings->SaveDword(Type,(DWORD)ComboBox.GetItemData(index));
 		}
 		if (ComboBox.IsReset())
 		{
-#ifdef tofix
 			_Settings->DeleteSetting(Type);
-#endif
 			ComboBox.SetReset(false);
 		}
 	}
 
-	virtual void UpdateModComboBoxTxt ( CModifiedComboBoxTxt & ComboBox, SettingID Type )
-	{
-		if (ComboBox.IsChanged())
-		{
-			int index = ComboBox.GetCurSel();
-			if (index == CB_ERR) 
-			{
-				return; 
-			}
-			_Settings->SaveString(Type,((stdstr *)ComboBox.GetItemData(index))->c_str());
-		}
-		if (ComboBox.IsReset())
-		{
-#ifdef tofix
-			_Settings->DeleteSetting(Type);
-#endif
-			ComboBox.SetReset(false);
-		}
-	}
 public:
-	virtual void ApplyEditBoxes ( void )
-	{
-		for (TextBoxList::iterator eb_iter = m_TxtBoxList.begin(); eb_iter != m_TxtBoxList.end(); eb_iter ++)
-		{
-			CModifiedEditBox * EditBox = eb_iter->second;
-			UpdateModEditBox(*EditBox,eb_iter->first);
-		}
-	}
 	virtual void ApplyCheckBoxes ( void )
 	{
 		for (ButtonList::iterator iter = m_ButtonList.begin(); iter != m_ButtonList.end(); iter ++)
@@ -423,11 +219,6 @@ public:
 	}
 	virtual void ApplyComboBoxes ( void )
 	{
-		for (ComboBoxTxtList::iterator cbtxt_iter = m_ComboBoxTxtList.begin(); cbtxt_iter != m_ComboBoxTxtList.end(); cbtxt_iter ++)
-		{
-			CModifiedComboBoxTxt * ComboBox = cbtxt_iter->second;
-			UpdateModComboBoxTxt(*ComboBox,cbtxt_iter->first);
-		}
 		for (ComboBoxList::iterator cb_iter = m_ComboBoxList.begin(); cb_iter != m_ComboBoxList.end(); cb_iter ++)
 		{
 			CModifiedComboBox * ComboBox = cb_iter->second;
@@ -436,7 +227,6 @@ public:
 	}
 	void ApplySettings( bool UpdateScreen )
 	{
-		ApplyEditBoxes();
 		ApplyCheckBoxes();
 		ApplyComboBoxes();
 
@@ -448,26 +238,10 @@ public:
 
 	bool EnableReset ( void )
 	{
-		for (TextBoxList::iterator eb_iter = m_TxtBoxList.begin(); eb_iter != m_TxtBoxList.end(); eb_iter ++)
-		{
-			CModifiedEditBox * EditBox = eb_iter->second;
-			if (EditBox->IsChanged())
-			{
-				return true;
-			}
-		}
 		for (ButtonList::iterator iter = m_ButtonList.begin(); iter != m_ButtonList.end(); iter ++)
 		{
 			CModifiedButton * Button = iter->second;
 			if (Button->IsChanged())
-			{
-				return true;
-			}
-		}
-		for (ComboBoxTxtList::iterator cbtxt_iter = m_ComboBoxTxtList.begin(); cbtxt_iter != m_ComboBoxTxtList.end(); cbtxt_iter ++)
-		{
-			CModifiedComboBoxTxt * ComboBox = cbtxt_iter->second;
-			if (ComboBox->IsChanged())
 			{
 				return true;
 			}
@@ -486,26 +260,10 @@ public:
 	void ResetPage ( void )
 	{
 		bool Changed = false;
-		for (TextBoxList::iterator eb_iter = m_TxtBoxList.begin(); eb_iter != m_TxtBoxList.end(); eb_iter ++)
-		{
-			CModifiedEditBox * EditBox = eb_iter->second;
-			if (ResetEditBox(*EditBox,eb_iter->first))
-			{
-				Changed = true;
-			}
-		}
 		for (ButtonList::iterator iter = m_ButtonList.begin(); iter != m_ButtonList.end(); iter ++)
 		{
 			CModifiedButton * Button = iter->second;
 			if (ResetCheckBox(*Button,iter->first))
-			{
-				Changed = true;
-			}
-		}
-		for (ComboBoxTxtList::iterator cbtxt_iter = m_ComboBoxTxtList.begin(); cbtxt_iter != m_ComboBoxTxtList.end(); cbtxt_iter ++)
-		{
-			CModifiedComboBoxTxt * ComboBox = cbtxt_iter->second;
-			if (ResetComboBoxTxt(*ComboBox,cbtxt_iter->first))
 			{
 				Changed = true;
 			}
@@ -524,11 +282,8 @@ public:
 		}
 	}
 protected:
-	TextBoxList     m_TxtBoxList;
-	ButtonList      m_ButtonList;
-	ComboBoxList    m_ComboBoxList;
-	ComboBoxTxtList m_ComboBoxTxtList;
-	bool            m_UpdatingTxt;
+	ButtonList   m_ButtonList;
+	ComboBoxList m_ComboBoxList;
 };
 
 
@@ -549,7 +304,13 @@ public:
 	CSettingsPage * GetPage ( int PageNo );
 };
 
+#include "Settings Page - Advanced Options.h"
+#include "Settings Page - Directories.h"
 #include "Settings Page - Game - General.h"
 #include "Settings Page - Game - Plugin.h"
 #include "Settings Page - Game - Recompiler.h"
 #include "Settings Page - Game - Status.h"
+#include "Settings Page - Game Browser.h"
+#include "Settings Page - Keyboard Shortcuts.h"
+#include "Settings Page - Options.h"
+#include "Settings Page - Plugin.h"
