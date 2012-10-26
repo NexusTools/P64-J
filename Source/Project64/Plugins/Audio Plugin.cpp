@@ -45,7 +45,6 @@ CAudioPlugin::CAudioPlugin ( const char * FileName) {
 	Update = (void (__cdecl *)(BOOL))GetProcAddress( (HMODULE)hDll, "AiUpdate" );
 
 	//version 102 functions
-	SetSettingInfo   = (void (__cdecl *)(PLUGIN_SETTINGS *))GetProcAddress( (HMODULE)hDll, "SetSettingInfo" );
 	PluginOpened     = (void (__cdecl *)(void))GetProcAddress( (HMODULE)hDll, "PluginLoaded" );
 
 	//Make sure dll had all needed functions
@@ -56,11 +55,17 @@ CAudioPlugin::CAudioPlugin ( const char * FileName) {
 	if (RomClosed      == NULL) { UnloadPlugin(); return;  }
 	if (ProcessAList   == NULL) { UnloadPlugin(); return;  }
 
-	if (m_PluginInfo.Version >= 0x0102)
+	SetSettingInfo2   = (void (__cdecl *)(PLUGIN_SETTINGS2 *))GetProcAddress( (HMODULE)hDll, "SetSettingInfo2" );
+	if (SetSettingInfo2)
 	{
-		if (SetSettingInfo  == NULL) { UnloadPlugin(); return; }
-		if (PluginOpened    == NULL) { UnloadPlugin(); return; }
+		PLUGIN_SETTINGS2 info;
+		info.FindSystemSettingId = (unsigned int (*)( void * handle, const char * ))CSettings::FindGameSetting;
+		SetSettingInfo2(&info);
+	}
 
+	SetSettingInfo   = (void (__cdecl *)(PLUGIN_SETTINGS *))GetProcAddress( (HMODULE)hDll, "SetSettingInfo" );
+	if (SetSettingInfo)
+	{
 		PLUGIN_SETTINGS info;
 		info.dwSize = sizeof(PLUGIN_SETTINGS);
 		info.DefaultStartRange = FirstAudioDefaultSet;
@@ -78,7 +83,11 @@ CAudioPlugin::CAudioPlugin ( const char * FileName) {
 
 		SetSettingInfo(&info);
 		//_Settings->UnknownSetting_AUDIO = info.UseUnregisteredSetting;
-
+	}
+	
+	if (m_PluginInfo.Version >= 0x0102)
+	{
+		if (PluginOpened    == NULL) { UnloadPlugin(); return; }
 		PluginOpened();
 	}
 
@@ -262,7 +271,7 @@ void CAudioPlugin::UnloadPlugin(void) {
 void CAudioPlugin::DacrateChanged  (SystemType Type) {
 	if (!Initilized()) { return; }
 	DWORD Frequency = _Reg->AI_DACRATE_REG * 66;
-	DWORD CountsPerSecond = (_Reg->VI_V_SYNC_REG != 0 ? (_Reg->VI_V_SYNC_REG + 1) * 1500 : 500000) * 60;
+	DWORD CountsPerSecond = (_Reg->VI_V_SYNC_REG != 0 ? (_Reg->VI_V_SYNC_REG + 1) * _Settings->LoadDword(Game_ViRefreshRate) : 500000) * 60;
 	m_CountsPerByte = (double)CountsPerSecond / (double)Frequency;
 	m_DacrateChanged(Type);
 }

@@ -44,7 +44,6 @@ CRSP_Plugin::CRSP_Plugin ( const char * FileName) {
 	if (EnableDebugging == NULL) { EnableDebugging = DummyFunc1; }
 
 	//version 102 functions
-	SetSettingInfo   = (void (__cdecl *)(PLUGIN_SETTINGS *))GetProcAddress( (HMODULE)hDll, "SetSettingInfo" );
 	PluginOpened     = (void (__cdecl *)(void))GetProcAddress( (HMODULE)hDll, "PluginLoaded" );
 
 	//Make sure dll had all needed functions
@@ -53,11 +52,17 @@ CRSP_Plugin::CRSP_Plugin ( const char * FileName) {
 	if (RomClosed   == NULL) { UnloadPlugin(); return; }
 	if (CloseDLL    == NULL) { UnloadPlugin(); return; }
 
-	if (m_PluginInfo.Version >= 0x0102)
+	SetSettingInfo2   = (void (__cdecl *)(PLUGIN_SETTINGS2 *))GetProcAddress( (HMODULE)hDll, "SetSettingInfo2" );
+	if (SetSettingInfo2)
 	{
-		if (SetSettingInfo  == NULL) { UnloadPlugin(); return; }
-		if (PluginOpened    == NULL) { UnloadPlugin(); return; }
+		PLUGIN_SETTINGS2 info;
+		info.FindSystemSettingId = (unsigned int (*)( void * handle, const char * ))CSettings::FindGameSetting;
+		SetSettingInfo2(&info);
+	}
 
+	SetSettingInfo   = (void (__cdecl *)(PLUGIN_SETTINGS *))GetProcAddress( (HMODULE)hDll, "SetSettingInfo" );
+	if (SetSettingInfo)
+	{
 		PLUGIN_SETTINGS info;
 		info.dwSize = sizeof(PLUGIN_SETTINGS);
 		info.DefaultStartRange = FirstRSPDefaultSet;
@@ -75,6 +80,11 @@ CRSP_Plugin::CRSP_Plugin ( const char * FileName) {
 
 		SetSettingInfo(&info);
 		//_Settings->UnknownSetting_RSP = info.UseUnregisteredSetting;
+	}
+
+	if (m_PluginInfo.Version >= 0x0102)
+	{
+		if (PluginOpened    == NULL) { UnloadPlugin(); return; }
 
 		PluginOpened();
 	}

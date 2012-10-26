@@ -25,16 +25,19 @@ enum SettingID {
 	Setting_ApplicationName,
 	Setting_UseFromRegistry,
 	Setting_RdbEditor,
+	Setting_PluginPageFirst,
 	Setting_DisableScrSaver,
 	Setting_AutoSleep,
 	Setting_AutoStart,
 	Setting_AutoFullscreen,
+	Setting_EraseGameDefaults,
 		
 	Setting_AutoZipInstantSave,
 	Setting_RememberCheats,
 	Setting_CurrentLanguage,
 
 	//RDB TLB Settings
+	Rdb_GoodName,
 	Rdb_SaveChip,
 	Rdb_CpuType,
 	Rdb_RDRamSize,
@@ -43,6 +46,8 @@ enum SettingID {
 	Rdb_DelaySi,
 	Rdb_SPHack,
 	Rdb_Status,
+	Rdb_NotesCore,
+	Rdb_NotesPlugin,
 	Rdb_FixedAudio,
 	Rdb_SyncViaAudio,
 	Rdb_RspAudioSignal,
@@ -62,11 +67,16 @@ enum SettingID {
 	Rdb_SMM_Protect,
 	Rdb_SMM_ValidFunc,
 	Rdb_GameCheatFix,
+	Rdb_ViRefreshRate,
 
 	//Individual Game Settings
 	Game_IniKey,
 	Game_GameName,
 	Game_GoodName,
+	Game_EditPlugin_Gfx,
+	Game_EditPlugin_Audio,
+	Game_EditPlugin_Contr,
+	Game_EditPlugin_RSP,
 	Game_Plugin_Gfx,
 	Game_Plugin_Audio,
 	Game_Plugin_Controller,
@@ -95,6 +105,7 @@ enum SettingID {
 	Game_UseHleGfx,
 	Game_UseHleAudio,
 	Game_LoadRomToMemory,
+	Game_ViRefreshRate,
 
 	// General Game running info
 	GameRunning_LoadingInProgress,

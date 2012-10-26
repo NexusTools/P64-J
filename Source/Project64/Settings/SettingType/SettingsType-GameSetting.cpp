@@ -4,20 +4,21 @@
 #include "SettingsType-GameSetting.h"
 
 bool    CSettingTypeGame::m_RdbEditor = false;
+bool    CSettingTypeGame::m_EraseDefaults = true;
 stdstr  CSettingTypeGame::m_SectionIdent;
 
-CSettingTypeGame::CSettingTypeGame(LPCSTR Section, LPCSTR Name, LPCSTR DefaultValue )	:
-	CSettingTypeApplication("",FixName(Section,Name).c_str(),DefaultValue)
+CSettingTypeGame::CSettingTypeGame(LPCSTR Name, LPCSTR DefaultValue )	:
+	CSettingTypeApplication("",Name,DefaultValue)
 {
 }
 
-CSettingTypeGame::CSettingTypeGame(LPCSTR Section, LPCSTR Name, DWORD DefaultValue ) :
-	CSettingTypeApplication("",FixName(Section,Name).c_str(),DefaultValue)
+CSettingTypeGame::CSettingTypeGame(LPCSTR Name, DWORD DefaultValue ) :
+	CSettingTypeApplication("",Name,DefaultValue)
 {
 }
 
-CSettingTypeGame::CSettingTypeGame(LPCSTR Section, LPCSTR Name, SettingID DefaultSetting ) :
-	CSettingTypeApplication("",FixName(Section,Name).c_str(),DefaultSetting)
+CSettingTypeGame::CSettingTypeGame(LPCSTR Name, SettingID DefaultSetting ) :
+	CSettingTypeApplication("",Name,DefaultSetting)
 {
 }
 
@@ -36,18 +37,6 @@ void CSettingTypeGame::CleanUp   ( void )
 	_Settings->UnregisterChangeCB(Game_IniKey,NULL,UpdateSettings);
 }
 
-stdstr CSettingTypeGame::FixName ( LPCSTR Section, LPCSTR Name )
-{
-	stdstr FixedName;
-	if (Section !=- NULL && strlen(Section) > 0)
-	{
-		FixedName.Format("%s-%s",Section,Name);
-	} else {
-		FixedName.Format("%s",Name);
-	}
-	return FixedName;
-}
-
 LPCSTR CSettingTypeGame::SectionName ( void ) const
 {
 	return m_SectionIdent.c_str();
@@ -55,7 +44,8 @@ LPCSTR CSettingTypeGame::SectionName ( void ) const
 
 void CSettingTypeGame::UpdateSettings ( void * /*Data */ )
 {
-	m_RdbEditor    = _Settings->LoadBool(Setting_RdbEditor);
+	m_RdbEditor     = _Settings->LoadBool(Setting_RdbEditor);
+	m_EraseDefaults = _Settings->LoadBool(Setting_EraseGameDefaults);
 	stdstr SectionIdent = _Settings->LoadString(Game_IniKey);
 
 	if (SectionIdent != m_SectionIdent)
@@ -151,13 +141,23 @@ void CSettingTypeGame::LoadDefault ( int Index, stdstr & Value ) const
 			_Settings->LoadDefaultString(m_DefaultSetting,Value);
 		}
 	} else {
-		CSettingTypeApplication::Load(Index,Value);
+		CSettingTypeApplication::LoadDefault(Index,Value);
 	}
 }
 
 //Update the settings
 void CSettingTypeGame::Save ( int Index, bool Value )
 {
+	if (m_EraseDefaults)
+	{
+		bool bDefault;
+		LoadDefault(Index,bDefault);
+		if (bDefault == Value)
+		{
+			Delete(Index);
+			return;
+		}
+	}
 	if (m_RdbEditor && _Settings->GetSettingType(m_DefaultSetting) == SettingType_RomDatabase)
 	{
 		if (_Settings->IndexBasedSetting(m_DefaultSetting))
@@ -173,6 +173,16 @@ void CSettingTypeGame::Save ( int Index, bool Value )
 
 void CSettingTypeGame::Save ( int Index, ULONG Value )
 {
+	if (m_EraseDefaults)
+	{
+		ULONG ulDefault;
+		CSettingTypeGame::LoadDefault(Index,ulDefault);
+		if (ulDefault == Value)
+		{
+			Delete(Index);
+			return;
+		}
+	}
 	if (m_RdbEditor && _Settings->GetSettingType(m_DefaultSetting) == SettingType_RomDatabase)
 	{
 		if (_Settings->IndexBasedSetting(m_DefaultSetting))
@@ -193,6 +203,16 @@ void CSettingTypeGame::Save ( int Index, const stdstr & Value )
 
 void CSettingTypeGame::Save ( int Index, const char * Value )
 {
+	if (m_EraseDefaults)
+	{
+		stdstr szDefault;
+		CSettingTypeGame::LoadDefault(Index,szDefault);
+		if (_stricmp(szDefault.c_str(),Value) == 0)
+		{
+			Delete(Index);
+			return;
+		}
+	}
 	if (m_RdbEditor && _Settings->GetSettingType(m_DefaultSetting) == SettingType_RomDatabase)
 	{
 		if (_Settings->IndexBasedSetting(m_DefaultSetting))

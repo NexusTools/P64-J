@@ -25,10 +25,10 @@ CN64System::CN64System ( CNotification * Notify, CPlugins * Plugins ):
 	_Settings->RegisterChangeCB(Plugin_CONT_Current,this,(CSettings::SettingChangedFunc)PluginChanged);
 	_Settings->RegisterChangeCB(Plugin_UseHleGfx,this,(CSettings::SettingChangedFunc)PluginChanged);
 	_Settings->RegisterChangeCB(Plugin_UseHleAudio,this,(CSettings::SettingChangedFunc)PluginChanged);
-	_Settings->RegisterChangeCB(Game_Plugin_Gfx,this,(CSettings::SettingChangedFunc)PluginChanged);
-	_Settings->RegisterChangeCB(Game_Plugin_Audio,this,(CSettings::SettingChangedFunc)PluginChanged);
-	_Settings->RegisterChangeCB(Game_Plugin_Controller,this,(CSettings::SettingChangedFunc)PluginChanged);
-	_Settings->RegisterChangeCB(Game_Plugin_RSP,this,(CSettings::SettingChangedFunc)PluginChanged);
+	_Settings->RegisterChangeCB(Game_EditPlugin_Gfx,this,(CSettings::SettingChangedFunc)PluginChanged);
+	_Settings->RegisterChangeCB(Game_EditPlugin_Audio,this,(CSettings::SettingChangedFunc)PluginChanged);
+	_Settings->RegisterChangeCB(Game_EditPlugin_Contr,this,(CSettings::SettingChangedFunc)PluginChanged);
+	_Settings->RegisterChangeCB(Game_EditPlugin_RSP,this,(CSettings::SettingChangedFunc)PluginChanged);
 
 	//InterpreterOpcode = NULL;
 	m_hPauseEvent = CreateEvent(NULL,true,false,NULL);
@@ -50,10 +50,10 @@ CN64System::~CN64System ( void ) {
 	_Settings->UnregisterChangeCB(Plugin_CONT_Current,this,(CSettings::SettingChangedFunc)PluginChanged);
 	_Settings->UnregisterChangeCB(Plugin_UseHleGfx,this,(CSettings::SettingChangedFunc)PluginChanged);
 	_Settings->UnregisterChangeCB(Plugin_UseHleAudio,this,(CSettings::SettingChangedFunc)PluginChanged);
-	_Settings->UnregisterChangeCB(Game_Plugin_Gfx,this,(CSettings::SettingChangedFunc)PluginChanged);
-	_Settings->UnregisterChangeCB(Game_Plugin_Audio,this,(CSettings::SettingChangedFunc)PluginChanged);
-	_Settings->UnregisterChangeCB(Game_Plugin_Controller,this,(CSettings::SettingChangedFunc)PluginChanged);
-	_Settings->UnregisterChangeCB(Game_Plugin_RSP,this,(CSettings::SettingChangedFunc)PluginChanged);
+	_Settings->UnregisterChangeCB(Game_EditPlugin_Gfx,this,(CSettings::SettingChangedFunc)PluginChanged);
+	_Settings->UnregisterChangeCB(Game_EditPlugin_Gfx,this,(CSettings::SettingChangedFunc)PluginChanged);
+	_Settings->UnregisterChangeCB(Game_EditPlugin_Contr,this,(CSettings::SettingChangedFunc)PluginChanged);
+	_Settings->UnregisterChangeCB(Game_EditPlugin_RSP,this,(CSettings::SettingChangedFunc)PluginChanged);
 }
 
 void CN64System::PluginChanged ( CN64System * _this )
@@ -1461,7 +1461,7 @@ void CN64System::RefreshScreen ( void ) {
 	if (_Reg->VI_V_SYNC_REG == 0) {
 		VI_INTR_TIME = 500000;
 	} else {
-		VI_INTR_TIME = (_Reg->VI_V_SYNC_REG + 1) * 1500;
+		VI_INTR_TIME = (_Reg->VI_V_SYNC_REG + 1) * ViRefreshRate();
 		if ((_Reg->VI_V_SYNC_REG % 1) != 0) {
 			VI_INTR_TIME -= 38;
 		}
