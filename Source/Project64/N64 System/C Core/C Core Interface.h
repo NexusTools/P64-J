@@ -36,8 +36,9 @@ public:
 	static DWORD StopTimer  ( void );
 };
 
-#endif
 #include <common/memtest.h>
+
+#endif
 
 #ifdef __cplusplus
 extern "C" {

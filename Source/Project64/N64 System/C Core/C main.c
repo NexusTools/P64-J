@@ -1,7 +1,8 @@
 #include <windows.h>
 #include <stdio.h>
-#include "main.h"
-#include "cpu.h"
+#include "C Global Variable.h"
+
+const char * GetAppName ( void );
 
 int GetStoredWinPos( char * WinName, DWORD * X, DWORD * Y ) {
 	long lResult;
@@ -10,7 +11,7 @@ int GetStoredWinPos( char * WinName, DWORD * X, DWORD * Y ) {
 
 	sprintf(String,"Software\\N64 Emulation\\%s\\Page Setup",AppName);
 	lResult = RegOpenKeyEx( HKEY_CURRENT_USER,String,0, KEY_ALL_ACCESS,&hKeyResults);
-	
+
 	if (lResult == ERROR_SUCCESS) {
 		DWORD Type, Value, Bytes = 4;
 
@@ -22,7 +23,7 @@ int GetStoredWinPos( char * WinName, DWORD * X, DWORD * Y ) {
 			RegCloseKey(hKeyResults);
 			return FALSE;
 		}
-	
+
 		sprintf(String,"%s Left",WinName);
 		lResult = RegQueryValueEx(hKeyResults,String,0,&Type,(LPBYTE)(&Value),&Bytes);
 		if (Type == REG_DWORD && lResult == ERROR_SUCCESS) { 

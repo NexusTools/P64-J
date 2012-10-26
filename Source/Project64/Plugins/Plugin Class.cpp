@@ -166,7 +166,7 @@ void CPlugins::Reset ( PLUGIN_TYPE Type ) {
 			m_RSP = NULL;
 		}
 		{
-			stdstr_f RspPluginFile("%s%s",m_PluginDir.c_str(),_Settings->LoadString(CurrentRSP_Plugin).c_str());
+			stdstr_f RspPluginFile("%sRSP.dll",m_PluginDir.c_str(),_Settings->LoadString(CurrentRSP_Plugin).c_str());
 			WriteTraceF(TraceRSP,"Loading (%s): Starting",RspPluginFile.c_str());
 			m_RSP   = new CRSP_Plugin(RspPluginFile.c_str());
 			WriteTrace(TraceRSP,"Loading Done");
@@ -195,7 +195,7 @@ void CPlugins::Reset ( PLUGIN_TYPE Type ) {
 			m_Gfx = NULL;
 		}
 		{
-			stdstr_f GfxPluginFile("%s%s",m_PluginDir.c_str(),_Settings->LoadString(CurrentGFX_Plugin).c_str());
+			stdstr_f GfxPluginFile("%sJabo_Direct3D6.dll",m_PluginDir.c_str(),_Settings->LoadString(CurrentGFX_Plugin).c_str());
 			WriteTraceF(TraceGfxPlugin,"Loading (%s): Starting",GfxPluginFile.c_str());
 			m_Gfx   = new CGfxPlugin(GfxPluginFile.c_str());
 			WriteTrace(TraceGfxPlugin,"Loading Done");
@@ -215,7 +215,7 @@ void CPlugins::Reset ( PLUGIN_TYPE Type ) {
 		WriteTrace(TraceDebug,"CPlugins::Reset 21");
 		}
 		WriteTrace(TraceDebug,"CPlugins::Reset 22");
-		m_Audio = new CAudioPlugin(stdstr_f("%s%s",m_PluginDir.c_str(),_Settings->LoadString(CurrentAUDIO_Plugin).c_str()).c_str());
+		m_Audio = new CAudioPlugin(stdstr_f("%sJabo_Dsound.dll",m_PluginDir.c_str(),_Settings->LoadString(CurrentAUDIO_Plugin).c_str()).c_str());
 		WriteTrace(TraceDebug,"CPlugins::Reset 23");
 		_Settings->SaveString(CurVerAUDIO_Plugin,m_Audio->PluginName().c_str());
 		WriteTrace(TraceDebug,"CPlugins::Reset 24");
@@ -232,7 +232,7 @@ void CPlugins::Reset ( PLUGIN_TYPE Type ) {
 		WriteTrace(TraceDebug,"CPlugins::Reset 29");
 		}
 		WriteTrace(TraceDebug,"CPlugins::Reset 30");
-		m_Control = new CControl_Plugin(stdstr_f("%s%s",m_PluginDir.c_str(),_Settings->LoadString(CurrentCONT_Plugin).c_str()).c_str());
+		m_Control = new CControl_Plugin(stdstr_f("%sJabo_DInput.dll",m_PluginDir.c_str(),_Settings->LoadString(CurrentCONT_Plugin).c_str()).c_str());
 		WriteTrace(TraceDebug,"CPlugins::Reset 31");
 		_Settings->SaveString(CurVerCONT_Plugin,m_Control->PluginName().c_str());
 		WriteTrace(TraceDebug,"CPlugins::Reset 32");

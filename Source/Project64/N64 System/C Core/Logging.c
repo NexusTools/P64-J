@@ -28,6 +28,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "main.h"
 #include "cpu.h"
 #include "debugger.h"

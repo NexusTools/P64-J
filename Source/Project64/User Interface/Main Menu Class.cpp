@@ -1,6 +1,7 @@
 #include "..\\User Interface.h"
 #include "..\\N64 System.h"
 #include "..\\Plugin.h"
+#include "..\\User Interface\\Settings Config.h"
 #include <windows.h>
 #include "..\\3rd Party\\HTML Help\\HTMLHELP.H"
 #include <common/CriticalSection.h>
@@ -210,6 +211,7 @@ bool CMainMenu::ProcessMessage(WND_HANDLE hWnd, DWORD FromAccelerator, DWORD Men
 		_System->ExternalEvent(ChangingFullScreen);		
 		break;
 	case ID_OPTIONS_FULLSCREEN2:  
+#ifdef tofix
 		if (_Settings->LoadDword(InFullScreen))
 		{
 			WriteTrace(TraceDebug,"ID_OPTIONS_FULLSCREEN a");
@@ -250,6 +252,7 @@ bool CMainMenu::ProcessMessage(WND_HANDLE hWnd, DWORD FromAccelerator, DWORD Men
 			WriteTrace(TraceDebug,"ID_OPTIONS_FULLSCREEN b 6");
 			ResetMenu();
 		}
+#endif
 		WriteTrace(TraceDebug,"ID_OPTIONS_FULLSCREEN 1");
 		break;
 	case ID_OPTIONS_ALWAYSONTOP:
@@ -277,7 +280,12 @@ bool CMainMenu::ProcessMessage(WND_HANDLE hWnd, DWORD FromAccelerator, DWORD Men
 		_System->ExternalEvent(CPUUsageTimerChanged);
 		ResetMenu();
 		break;
-	//case ID_OPTIONS_SETTINGS: _Settings->Config((void *)hWnd,_System,_Gui); break;
+	case ID_OPTIONS_SETTINGS:
+		{
+			CSettingConfig SettingConfig;
+			SettingConfig.Display(hWnd);
+		}
+		break;
 	case ID_PROFILE_PROFILE:
 		_Settings->SaveDword(ProfileCode,!_Settings->LoadDword(ProfileCode));
 		_System->ExternalEvent(Profile_StartStop);
@@ -1148,7 +1156,7 @@ void CMainMenu::RebuildAccelerators(void) {
 	MENU_SHORT_CUT_KEY::ACCESS_MODE AccessLevel = MENU_SHORT_CUT_KEY::GAME_NOT_RUNNING;
 	if (_Settings->LoadBool(CPU_Running))
 	{
-		AccessLevel = _Settings->LoadDword(InFullScreen) != 0 ? 
+		AccessLevel = _Settings->LoadBool(InFullScreen) != 0 ? 
 			MENU_SHORT_CUT_KEY::GAME_RUNNING_FULLSCREEN : 
 			MENU_SHORT_CUT_KEY::GAME_RUNNING_WINDOW;
 	}

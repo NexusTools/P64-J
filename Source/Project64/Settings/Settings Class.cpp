@@ -720,7 +720,20 @@ bool CSettings::LoadStringIndex ( SettingID Type, int index, char * Buffer, int 
 
 void CSettings::SaveBool ( SettingID Type, bool Value )
 {
-	Notify().BreakPoint(__FILE__,__LINE__); 
+	SETTING_HANDLER FindInfo = m_SettingInfo.find(Type);
+	if (FindInfo == m_SettingInfo.end()) 
+	{  
+		//if not found do nothing
+		UnknownSetting(Type);
+		return;
+	}
+	if (FindInfo->second->IndexBasedSetting())
+	{
+		Notify().BreakPoint(__FILE__,__LINE__); 
+	} else {
+		FindInfo->second->Save(0,Value);
+	}
+	NotifyCallBacks(Type);
 }
 
 void CSettings::SaveBoolIndex( SettingID Type, int index, bool Value )

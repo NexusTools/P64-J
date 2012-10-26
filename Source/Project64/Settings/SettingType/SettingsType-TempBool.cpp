@@ -25,9 +25,9 @@ bool CSettingTypeTempBool::Load ( int Index, stdstr & Value ) const
 	return false;
 }
 
-void CSettingTypeTempBool::Save ( int Index, bool Value )
+void CSettingTypeTempBool::Save ( int /*Index*/, bool Value )
 {
-	Notify().BreakPoint(__FILE__,__LINE__); 
+	m_value = Value;
 }
 
 void CSettingTypeTempBool::Save ( int Index, ULONG Value )

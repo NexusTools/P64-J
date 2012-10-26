@@ -39,7 +39,7 @@ void CN64SystemSettings::RefreshSettings()
 	bBasicMode   = _Settings->LoadDword(BasicMode) != 0;
 	bLimitFPS    = _Settings->LoadDword(LimitFPS) != 0;
 	bShowDListAListCount = _Settings->LoadDword(ShowDListAListCount) != 0;
-	bFixedAudio  = _Settings->LoadDword(ROM_FixedAudio) != 0;
+	bFixedAudio  = false; //_Settings->LoadDword(ROM_FixedAudio) != 0;
 	bSyncToAudio = bFixedAudio ? _Settings->LoadDword(SyncViaAudio) != 0 : false;
 	bDisplayFrameRate = _Settings->LoadDword(DisplayFrameRate) != 0;
 }

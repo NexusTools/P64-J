@@ -1992,7 +1992,7 @@ public:
 	BOOL CreateFromStream(LPSTREAM lpStream)
 	{
 		ATLASSERT(m_hImageList == NULL);
-		m_hImageList = ImageList_Read(lpStream);
+		m_hImageList = NULL;
 		return (m_hImageList != NULL) ? TRUE : FALSE;
 	}
 #endif // __IStream_INTERFACE_DEFINED__
@@ -2099,26 +2099,26 @@ public:
 #ifndef _WIN32_WCE
 	static HIMAGELIST Read(LPSTREAM lpStream)
 	{
-		return ImageList_Read(lpStream);
+		return NULL;
 	}
 
 	BOOL Write(LPSTREAM lpStream)
 	{
 		ATLASSERT(m_hImageList != NULL);
-		return ImageList_Write(m_hImageList, lpStream);
+		return NULL;
 	}
 #endif // !_WIN32_WCE
 
 #if (_WIN32_WINNT >= 0x0501)
 	static HRESULT ReadEx(DWORD dwFlags, LPSTREAM lpStream, REFIID riid, PVOID* ppv)
 	{
-		return ImageList_ReadEx(dwFlags, lpStream, riid, ppv);
+		return NULL;
 	}
 
 	HRESULT WriteEx(DWORD dwFlags, LPSTREAM lpStream)
 	{
 		ATLASSERT(m_hImageList != NULL);
-		return ImageList_WriteEx(m_hImageList, dwFlags, lpStream);
+		return NULL;
 	}
 #endif // (_WIN32_WINNT >= 0x0501)
 #endif // __IStream_INTERFACE_DEFINED__

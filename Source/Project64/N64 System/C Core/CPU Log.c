@@ -27,12 +27,13 @@
 //#if (!defined(EXTERNAL_RELEASE))
 #include <windows.h>
 #include <stdio.h>
-#include "main.h"
-#include "debugger.h"
-
-#ifdef Log_x86Code
+#include <stdlib.h>
+//#include "main.h"
+//#include "debugger.h"
 
 static HANDLE hCPULogFile = NULL;
+
+void Stop_x86_Log (void);
 
 BOOL IsX86Logging ( void )
 {
@@ -73,5 +74,5 @@ void Stop_x86_Log (void) {
 		hCPULogFile = NULL;
 	}
 }
-#endif 
+
 //#endif

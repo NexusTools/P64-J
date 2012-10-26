@@ -107,7 +107,7 @@ void CNotification::SetGfxPlugin( CGfxPlugin * Plugin )
 
 void CNotification::SetWindowCaption (const char * Caption) {
 	char WinTitle[256];
-	_snprintf( WinTitle, sizeof(WinTitle), "%s - %s", Caption, _Settings->LoadString(ApplicationName).c_str());
+	_snprintf( WinTitle, sizeof(WinTitle), "%s - %s", Caption, "Project64" /*_Settings->LoadString(ApplicationName).c_str()*/);
 	WinTitle[sizeof(WinTitle) - 1] = 0;
 	_hWnd->Caption(WinTitle);
 }
@@ -200,7 +200,7 @@ void CNotification::AddRecentRom   ( const char * ImagePath ) {
 	for (count = 0; count < MaxRememberedFiles; count ++ ) {
 	//	_Settings->SaveString((SettingID)(FirstRecentRom + count), RecentRoms[count]);
 	}*/
-	Notify().BreakPoint(__FILE__,__LINE__); 
+	//Notify().BreakPoint(__FILE__,__LINE__); 
 }
 
 void CNotification::RefreshMenu ( void ) {

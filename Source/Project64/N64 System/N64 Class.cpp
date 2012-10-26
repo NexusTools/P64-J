@@ -88,20 +88,24 @@ void CN64System::ExternalEvent ( SystemEvent Event ) {
 		}
 		break;
 	case PauseCPU_AppLostFocus: 
-		if (!_Settings->LoadDword(CPU_Paused) && !g_CPU_Action->Pause)
+#ifdef tofix
+		if (!_Settings->LoadBool(CPU_Paused) && !g_CPU_Action->Pause)
 		{
 			_Settings->SaveDword(CPU_Paused_type, PauseType_AppLostFocus);
 			g_CPU_Action->Pause = TRUE;
 			g_CPU_Action->DoSomething = TRUE;
 		}
+#endif
 		break;
 	case PauseCPU_AppLostActive: 
+#ifdef tofix
 		if (!_Settings->LoadDword(CPU_Paused))
 		{
 			g_CPU_Action->Pause = TRUE;
 			g_CPU_Action->DoSomething = TRUE;
 			_Settings->SaveDword(CPU_Paused_type, PauseType_AppLostActive);
 		}
+#endif
 		break;
 	case PauseCPU_SaveGame: 
 		if (!_Settings->LoadDword(CPU_Paused))
@@ -248,7 +252,7 @@ void CN64System::RunFileImage ( const char * FileLoc )
 		HANDLE  * hThread = new HANDLE;
 		*hThread = NULL;
 
-		_Settings->SaveDword(LoadingRom,(DWORD)true);
+		_Settings->SaveBool(LoadingRom,true);
 
 		//create the needed info into a structure to pass as one paramater
 		//for createing a thread
@@ -275,7 +279,7 @@ void CN64System::LoadFileImage (  FileImageInfo * Info ) {
 	WriteTrace(TraceDebug,"CN64System::LoadFileImage 2");
 
 	//Mark the rom as loading
-	_Settings->SaveDword(LoadingRom,(DWORD)true);
+	_Settings->SaveBool(LoadingRom,true);
 	_this->_Notify->RefreshMenu();
 		
 	WriteTrace(TraceDebug,"CN64System::LoadFileImage 3");
@@ -305,7 +309,7 @@ void CN64System::LoadFileImage (  FileImageInfo * Info ) {
 	WriteTrace(TraceDebug,"CN64System::LoadFileImage 7");
 	_this->SetupSystem(Rom,true);
 	WriteTrace(TraceDebug,"CN64System::LoadFileImage 8");
-	_Settings->SaveDword(LoadingRom,(DWORD)false);
+	_Settings->SaveBool(LoadingRom,false);
 	_this->_Notify->RefreshMenu();
 	WriteTrace(TraceDebug,"CN64System::LoadFileImage 9");
 	if (_Settings->LoadDword(AutoStart) != 0)
@@ -377,7 +381,7 @@ void  CN64System::StartEmulation2   ( bool NewThread )
 	WriteTrace(TraceDebug,"CN64System::StartEmulation 8");
 	if (!_Plugins->Initiate(this)) {
 		WriteTrace(TraceDebug,"CN64System::StartEmulation 8a");
-		_Settings->SaveDword(LoadingRom,(DWORD)false);
+		_Settings->SaveBool(LoadingRom,false);
 		_Notify->DisplayError(MSG_PLUGIN_NOT_INIT);
 		//Set handle to NULL so this thread is not terminated
 		CPU_Handle = NULL;
@@ -400,11 +404,13 @@ void  CN64System::StartEmulation2   ( bool NewThread )
 	_Notify->MakeWindowOnTop(_Settings->LoadDword(AlwaysOnTop) != 0);
 
 	WriteTrace(TraceDebug,"CN64System::StartEmulation 13");
+#ifdef tofix
 	if (!_Settings->LoadDword(IsValidExe))
 	{
 		Reset();
 		return;
 	}
+#endif
 	WriteTrace(TraceDebug,"CN64System::StartEmulation 14");
 	//mark the emulation as starting and fix up menus
 	_Notify->DisplayMessage(5,MSG_EMULATION_STARTED);
@@ -415,7 +421,7 @@ void  CN64System::StartEmulation2   ( bool NewThread )
 		stdstr Status = _Settings->LoadString(ROM_Status);
 
 		char String[100];
-		RomIniFile.GetString("Rom Status",stdstr_f("%s.AutoFullScreen", Status.c_str).c_str(),"true",String,sizeof(String));
+		RomIniFile.GetString("Rom Status",stdstr_f("%s.AutoFullScreen", Status.c_str()).c_str(),"true",String,sizeof(String));
 		if (_stricmp(String,"true") == 0)
 		{
 			_Notify->ChangeFullScreen();
@@ -458,7 +464,7 @@ void CN64System::CloseCpu ( void ) {
 	if (CPU_Handle == NULL) { return; }
 	Debug_Reset();
 
-	if (_Settings->LoadDword(CPU_Paused))
+	if (_Settings->LoadBool(CPU_Paused))
 	{
 		SetEvent(m_hPauseEvent);
 	}
@@ -640,10 +646,10 @@ void CN64System::SetupSystem (  CN64Rom * Rom, bool OwnRomObject, bool SavesRead
 }
 
 void CN64System::ExecuteCPU ( void ) {
-	m_SPHack = _Settings->LoadDword(ROM_SPHack) != 0;
+	m_SPHack = false /*_Settings->LoadDword(ROM_SPHack) != 0*/;
 
-	_Settings->SaveDword(CPU_Running,true);
-	_Settings->SaveDword(CPU_Paused,(DWORD)false);
+	_Settings->SaveBool(CPU_Running,true);
+	_Settings->SaveBool(CPU_Paused,false);
 	_Notify->DisplayMessage(5,MSG_EMULATION_STARTED);
 	
 	EndEmulation = false;
@@ -654,11 +660,19 @@ void CN64System::ExecuteCPU ( void ) {
 //	C_Core.SetN64System(NULL);
 	C_Core.SetSyncCpu(NULL);
 	
+#ifdef tofix
 	switch ((CPU_TYPE)_Settings->LoadDword(CPUType)) {
-	case CPU_Recompiler: ExecuteRecompiler(C_Core); break;
+	case CPU_Recompiler:
+		ExecuteRecompiler(C_Core); 
+		break;
 	case CPU_SyncCores:  ExecuteSyncCPU(C_Core);    break;
-	default:             ExecuteInterpret(C_Core);  break;
+	default:             
+#endif
+		ExecuteInterpret(C_Core);  
+#ifdef tofix
+		break;
 	}
+#endif
 	CpuStopped();
 }
 
@@ -715,9 +729,9 @@ void CN64System::ExecuteSyncCPU (CC_Core & C_Core) {
 
 void CN64System::CpuStopped ( void ) {
 	void * lCPU_Handle = CPU_Handle;
-	_Settings->SaveDword(CPU_Running,(DWORD)false);
+	_Settings->SaveBool(CPU_Running,(DWORD)false);
 	CleanCMemory();
-	if (_Settings->LoadDword(InFullScreen))
+	if (_Settings->LoadBool(InFullScreen))
 	{
 		_Notify->ChangeFullScreen();
 	}
@@ -957,7 +971,7 @@ bool CN64System::SaveState(void) {
 
 	DWORD dwWritten, SaveID_0 = 0x23D8A6C8;
 	DWORD RdramSize   = _Settings->LoadDword(RamSize);
-	DWORD NextViTimer = _Reg->GetTimer(ViTimer);
+	DWORD NextViTimer = (DWORD)_Reg->GetTimer(ViTimer);
 	DWORD MiInterReg  = _Reg->MI_INTR_REG;
 	if (_Reg->GetTimer(AiTimer) != 0) { _Reg->MI_INTR_REG |= MI_INTR_AI; }
 	if (_Settings->LoadDword(AutoZip)) {

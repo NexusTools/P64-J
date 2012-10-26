@@ -1,3 +1,5 @@
+#include <Windows.h>
+#include <MMSystem.h>
 #include "..\..\N64 System.h"
 #include "..\C Core\c core.h"
 #include "..\C Core\Recompiler Ops.h"
@@ -16,12 +18,12 @@ CRecompiler::CRecompiler(CMipsMemory * MMU, CProfiling & Profile, bool & EndEmul
 	PROGRAM_COUNTER(_Reg->PROGRAM_COUNTER),
 	m_EndEmulation(EndEmulation),
 	m_SyncSystem(SyncSystem),
-	m_LookUpMode((FUNC_LOOKUP_METHOD)_Settings->LoadDword(FuncLookupMode)),
-	m_LinkBlocks(_Settings->LoadDword(BlockLinking) != 0),
-	m_DisableRegCaching(_Settings->LoadDword(ROM_RegCache) == 0),
-	m_RdramSize(_Settings->LoadDword(RamSize)),
-	m_CountPerOp(_Settings->LoadDword(CounterFactor)),
-	m_ValidateFuncs(_Settings->LoadDword(SMM_ValidFunc) != 0),
+	m_LookUpMode(FuncFind_PhysicalLookup/*(FUNC_LOOKUP_METHOD)_Settings->LoadDword(FuncLookupMode)*/),
+	m_LinkBlocks(false /*_Settings->LoadDword(BlockLinking) != 0*/),
+	m_DisableRegCaching(false /*_Settings->LoadDword(ROM_RegCache) == 0*/),
+	m_RdramSize(0x400000 /*_Settings->LoadDword(RamSize)*/),
+	m_CountPerOp(2/*_Settings->LoadDword(CounterFactor)*/),
+	m_ValidateFuncs(false /*_Settings->LoadDword(SMM_ValidFunc) != 0*/),
 	m_Functions(),
 	m_FunctionsDelaySlot()
 {
@@ -2268,7 +2270,8 @@ bool CRecompiler::InheritParentInfo (CBlockSection * Section)
 		}
 	}
 	int FirstParent = 0;
-	for (int count = 1;count < NoOfCompiledParents;count++) {
+	int count = 1;
+	for (;count < NoOfCompiledParents;count++) {
 		if (ParentList[count].JumpInfo->FallThrough) {
 			FirstParent = count; break;
 		}
@@ -2495,6 +2498,19 @@ bool CRecompiler::InheritParentInfo (CBlockSection * Section)
 	return true;
 }
 
+void LoadOpcode (DWORD Address)
+{
+	__try {
+		if (!r4300i_LW_VAddr(Address, &g_Opcode.Hex)) {
+			DisplayError(GS(MSG_FAIL_LOAD_WORD));
+			ExitThread(0);
+		} 
+	} __except( r4300i_CPU_MemoryFilter( GetExceptionCode(), GetExceptionInformation()) ) {
+		DisplayError(GS(MSG_UNKNOWN_MEM_ACTION));
+		ExitThread(0);
+	}
+}
+
 bool CRecompiler::GenerateX86Code(CBlockInfo & BlockInfo, CBlockSection * Section, DWORD Test )
 {
 	if (Section == NULL) { return false; }
@@ -2534,15 +2550,7 @@ bool CRecompiler::GenerateX86Code(CBlockInfo & BlockInfo, CBlockSection * Sectio
 		MoveConstToVariable((DWORD)RecompPos,&CurrentBlock,"CurrentBlock");
 	}*/
 	do {
-		__try {
-			if (!r4300i_LW_VAddr(Section->CompilePC, &g_Opcode.Hex)) {
-				DisplayError(GS(MSG_FAIL_LOAD_WORD));
-				ExitThread(0);
-			} 
-		} __except( r4300i_CPU_MemoryFilter( GetExceptionCode(), GetExceptionInformation()) ) {
-			DisplayError(GS(MSG_UNKNOWN_MEM_ACTION));
-			ExitThread(0);
-		}
+		LoadOpcode(Section->CompilePC);
 
 		//if (Section->CompilePC == 0x800AA51C && NextInstruction == NORMAL) { _asm int 3 }
 //		if (Section->CompilePC == 0xF000044 && NextInstruction == NORMAL) 
@@ -3077,7 +3085,7 @@ void CRecompiler::CompileExit ( CBlockSection * Section, DWORD JumpPC, DWORD Tar
 		if (m_SyncSystem) { Call_Direct(SyncToPC, "SyncToPC"); }
 		X86BreakPoint(__FILE__,__LINE__);
 		MoveVariableToX86reg(this,"this",x86_ECX);		
-		Call_Direct(AddressOf(ResetRecompCode), "ResetRecompCode");
+		Call_Direct(AddressOf(&CRecompiler::ResetRecompCode), "ResetRecompCode");
 		Ret();
 		break;
 	case CExitInfo::TLBReadMiss:

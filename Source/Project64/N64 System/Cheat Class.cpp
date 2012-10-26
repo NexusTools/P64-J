@@ -90,12 +90,14 @@ void CCheats::LoadPermCheats (void)
 	{
 		return;
 	}
+#ifdef tofix
 	for (int CheatNo = 0; CheatNo < MaxCheats; CheatNo ++ ) 
 	{
 		stdstr LineEntry = _Settings->LoadString((SettingID)(CheatPermEntry + CheatNo));
 		if (LineEntry.empty()) { break; }		
 		LoadCode(-1, LineEntry.c_str());
 	}
+#endif
 }
 
 void CCheats::LoadCheats(bool DisableSelected) {
@@ -103,6 +105,7 @@ void CCheats::LoadCheats(bool DisableSelected) {
 	m_Codes.clear();
 	LoadPermCheats();
 
+#ifdef tofix
 	for (int CheatNo = 0; CheatNo < MaxCheats; CheatNo ++ ) 
 	{
 		stdstr LineEntry = _Settings->LoadString((SettingID)(CheatEntry + CheatNo));
@@ -125,6 +128,7 @@ void CCheats::LoadCheats(bool DisableSelected) {
 		
 		LoadCode(CheatNo, &LineEntry.c_str()[EndOfName + 2]);
 	}
+#endif
 }
 
 /********************************************************************************************
@@ -168,7 +172,7 @@ void CCheats::ApplyCheats(CMipsMemory * _MMU)
 	for (int CurrentCheat = 0; CurrentCheat < m_Codes.size(); CurrentCheat ++) 
 	{
 		const CODES & CodeEntry = m_Codes[CurrentCheat];
-		for (int CurrentEntry = 0; CurrentEntry < CodeEntry.size();)
+		for (size_t CurrentEntry = 0; CurrentEntry < CodeEntry.size();)
 		{
 			CurrentEntry += ApplyCheatEntry(_MMU, CodeEntry,CurrentEntry,TRUE);
 		}
@@ -178,7 +182,7 @@ void CCheats::ApplyCheats(CMipsMemory * _MMU)
 void CCheats::ApplyGSButton (CMipsMemory * _MMU) 
 {
 	DWORD Address;
-	for (int CurrentCheat = 0; CurrentCheat < m_Codes.size(); CurrentCheat ++) 
+	for (size_t CurrentCheat = 0; CurrentCheat < m_Codes.size(); CurrentCheat ++) 
 	{
 		const CODES & CodeEntry = m_Codes[CurrentCheat];
 		for (int CurrentEntry = 0; CurrentEntry < CodeEntry.size(); CurrentEntry ++)
@@ -740,7 +744,8 @@ int CALLBACK CCheats::CheatAddProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DWO
 					CNotification * _Notify   = _this->_Notify;
 					
 					stdstr NewCheatName = GetDlgItemStr(hDlg,IDC_CODE_NAME);
-					for (int count = 0; count < MaxCheats; count ++) {
+					int count = 0;
+					for (; count < MaxCheats; count ++) {
 						if (_this->m_EditCheat == count)
 						{
 							continue;
@@ -754,7 +759,7 @@ int CALLBACK CCheats::CheatAddProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DWO
 							}
 							break;
 						}
-						if (stricmp(CheatName.c_str(),NewCheatName.c_str()) == 0) {
+						if (_stricmp(CheatName.c_str(),NewCheatName.c_str()) == 0) {
 							_Notify->DisplayError(GS(MSG_CHEAT_NAME_IN_USE));
 							SetFocus(GetDlgItem((HWND)hDlg,IDC_CODE_NAME));
 							return true;
@@ -828,7 +833,7 @@ int CALLBACK CCheats::CheatAddProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DWO
 			LPCSTR ReadPos = strrchr(String,'"') + 2;
 			stdstr Buffer;
 			do {
-				char * End = strchr(ReadPos,',');
+				const char * End = strchr(ReadPos,',');
 				if (End)
 				{
 					Buffer.append(ReadPos,End - ReadPos);
@@ -851,7 +856,7 @@ int CALLBACK CCheats::CheatAddProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DWO
 			if (ReadPos) {
 				ReadPos += 1;
 				do {
-					char * End = strchr(ReadPos,',');
+					const char * End = strchr(ReadPos,',');
 					if (End)
 					{
 						Buffer.append(ReadPos,End - ReadPos);
@@ -1128,14 +1133,14 @@ int CALLBACK CCheats::CheatListProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DW
 			
 			//Update cheat listing with new extention
 			stdstr CheatName(_this->GetCheatName(item.lParam,true));
-			char * Cheat = strrchr(CheatName.c_str(),'\\');
+			const char * Cheat = strrchr(CheatName.c_str(),'\\');
 			if (Cheat == NULL) { 
 				Cheat = const_cast<char *>(CheatName.c_str()); 
 			} else {
 				Cheat += 1;
 			}
 			item.mask = TVIF_TEXT;
-			item.pszText = Cheat;
+			item.pszText = (LPSTR )Cheat;
 			item.cchTextMax = CheatName.length();
 			TreeView_SetItem((HWND)_this->m_hCheatTree,&item);
 		}
@@ -1520,8 +1525,8 @@ void CCheats::MenuSetText ( MENU_HANDLE hMenu, int MenuPos, const char * Title, 
 	MenuInfo.cch = 256;
 
 	GetMenuItemInfo((HMENU)hMenu,MenuPos,true,&MenuInfo);
-	if (strchr(Title,'\t') != NULL) { *(strchr(Title,'\t')) = '\0'; }
 	strcpy(String,Title);
+	if (strchr(String,'\t') != NULL) { *(strchr(String,'\t')) = '\0'; }
 	if (ShotCut) { sprintf(String,"%s\t%s",String,ShotCut); }
 	SetMenuItemInfo((HMENU)hMenu,MenuPos,true,&MenuInfo);
 }

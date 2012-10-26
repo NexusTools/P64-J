@@ -24,6 +24,7 @@
  *
  */
 #include <windows.h>
+#include <MMSystem.h>
 #include "main.h"
 #pragma comment(lib, "Winmm.lib")
 
@@ -31,7 +32,7 @@
 
 struct {
 	DWORD Frames, LastTime;
-	DOUBLE Ratio;
+	double Ratio;
 } FPSTimer = { 0,0, 1000.0F / 60.0F };
 
 void Timer_Initialize(double Hertz) {

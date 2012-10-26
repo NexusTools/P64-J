@@ -106,5 +106,5 @@ void CSettingTypeRomDatabase::Save ( int Index, const stdstr & Value )
 
 void CSettingTypeRomDatabase::Save ( int Index, const char * Value )
 {
-	Notify().BreakPoint(__FILE__,__LINE__); 
+	//Notify().BreakPoint(__FILE__,__LINE__); 
 }

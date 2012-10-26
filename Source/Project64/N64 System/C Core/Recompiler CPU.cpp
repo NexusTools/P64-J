@@ -23,9 +23,9 @@
  * should be forwarded to them so if they want them.
  *
  */
+#include <stdio.h>
 #include <Windows.h>
 #include <commctrl.h>
-#include <stdio.h>
 #include "c core.h"
 #include "main.h"
 #include "C Global Variable.h"

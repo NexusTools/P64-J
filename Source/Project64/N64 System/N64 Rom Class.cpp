@@ -458,10 +458,10 @@ bool CN64Rom::LoadN64Image ( const char * FileLoc, bool LoadBootCodeOnly ) {
 
 void CN64Rom::LoadRomSettings (void) {
 	//Load Rom Settings	
-	DWORD CPU_Type   = _Settings->LoadDword(ROM_CPUType);
-	DWORD RDRamSize  = _Settings->LoadDword(ROM_RamSize);
-	DWORD LookUpMode = _Settings->LoadDword(ROM_FunctionLookup);
-	bool UseCustomSMM = _Settings->LoadDword(ROM_CustomSMM) != 0;			
+	DWORD CPU_Type   = CPU_Recompiler; //_Settings->LoadDword(ROM_CPUType);
+	DWORD RDRamSize  = 4; //_Settings->LoadDword(ROM_RamSize);
+	DWORD LookUpMode = FuncFind_Default; //_Settings->LoadDword(ROM_FunctionLookup);
+	bool UseCustomSMM = false; //_Settings->LoadDword(ROM_CustomSMM) != 0;			
 
 	if (RDRamSize != -1 && RDRamSize != 8) { RDRamSize = 0x400000; }
 	if (RDRamSize == 8)                    { RDRamSize = 0x800000; }
@@ -469,32 +469,32 @@ void CN64Rom::LoadRomSettings (void) {
 	//Load system settings if need be
 	if (CPU_Type   == -1) { CPU_Type   = _Settings->LoadDword(SYSTEM_CPUType); }
 	if (RDRamSize  == -1) { RDRamSize  = _Settings->LoadDword(SYSTEM_RDRamSize); }
-	if (LookUpMode == -1) { LookUpMode = _Settings->LoadDword(SYSTEM_FunctionLookup); }
+	if (LookUpMode == -1) { LookUpMode = FuncFind_PhysicalLookup; /*_Settings->LoadDword(SYSTEM_FunctionLookup);*/ }
 
 	//Save execution settings
-	_Settings->SaveDword(CPUType,       CPU_Type);
-	_Settings->SaveDword(RamSize,       RDRamSize);
-	_Settings->SaveDword(FuncLookupMode, LookUpMode);
-	_Settings->SaveDword(SaveChipType,  _Settings->LoadDword(ROM_SaveChip));
-	_Settings->SaveDword(SMM_Cache,     _Settings->LoadDword(UseCustomSMM ? ROM_SMM_Cache     : SYSTEM_SMM_Cache));
-	_Settings->SaveDword(SMM_PIDMA,     _Settings->LoadDword(UseCustomSMM ? ROM_SMM_PIDMA     : SYSTEM_SMM_PIDMA));
-	_Settings->SaveDword(SMM_TLB,       _Settings->LoadDword(UseCustomSMM ? ROM_SMM_TLB       : SYSTEM_SMM_TLB));
-	_Settings->SaveDword(SMM_Protect,   _Settings->LoadDword(UseCustomSMM ? ROM_SMM_Protect   : SYSTEM_SMM_Protect));
-	_Settings->SaveDword(SMM_ValidFunc, _Settings->LoadDword(UseCustomSMM ? ROM_SMM_ValidFunc : SYSTEM_SMM_ValidFunc));
-	_Settings->SaveDword(CounterFactor, _Settings->LoadDword(ROM_CounterFactor));
-	_Settings->SaveDword(BlockLinking,  _Settings->LoadDword(ROM_BlockLinking));
-	_Settings->SaveDword(DelayDlists,   _Settings->LoadDword(ROM_DelayDlists));
-	_Settings->SaveDword(DelaySI,       _Settings->LoadDword(ROM_DelaySI));
-	_Settings->SaveDword(UseTLB,		   _Settings->LoadDword(ROM_UseTlb));
-	_Settings->SaveDword(AudioSignal,   _Settings->LoadDword(ROM_AudioSignal));
-	_Settings->SaveDword(UseJumpTable,  _Settings->LoadDword(ROM_UseJumpTable));
-	_Settings->SaveDword(RomInMemory,   _Settings->LoadDword(ROM_RomInMemory));
-	_Settings->SaveDword(SyncViaAudio,  _Settings->LoadDword(ROM_SyncAudio));
-	_Settings->SaveDword(FirstDMA,      true);
-	_Settings->SaveDword(CurrentSaveState,_Settings->LoadDword(Game_LastSaveSlot));	
+	//_Settings->SaveDword(CPUType,       CPU_Type);
+	//_Settings->SaveDword(RamSize,       RDRamSize);
+	//_Settings->SaveDword(FuncLookupMode, LookUpMode);
+	//_Settings->SaveDword(SaveChipType,  _Settings->LoadDword(ROM_SaveChip));
+	//_Settings->SaveDword(SMM_Cache,     _Settings->LoadDword(UseCustomSMM ? ROM_SMM_Cache     : SYSTEM_SMM_Cache));
+	//_Settings->SaveDword(SMM_PIDMA,     _Settings->LoadDword(UseCustomSMM ? ROM_SMM_PIDMA     : SYSTEM_SMM_PIDMA));
+	//_Settings->SaveDword(SMM_TLB,       _Settings->LoadDword(UseCustomSMM ? ROM_SMM_TLB       : SYSTEM_SMM_TLB));
+	//_Settings->SaveDword(SMM_Protect,   _Settings->LoadDword(UseCustomSMM ? ROM_SMM_Protect   : SYSTEM_SMM_Protect));
+	//_Settings->SaveDword(SMM_ValidFunc, _Settings->LoadDword(UseCustomSMM ? ROM_SMM_ValidFunc : SYSTEM_SMM_ValidFunc));
+	//_Settings->SaveDword(CounterFactor, _Settings->LoadDword(ROM_CounterFactor));
+	//_Settings->SaveDword(BlockLinking,  _Settings->LoadDword(ROM_BlockLinking));
+	//_Settings->SaveDword(DelayDlists,   _Settings->LoadDword(ROM_DelayDlists));
+	//_Settings->SaveDword(DelaySI,       _Settings->LoadDword(ROM_DelaySI));
+	//_Settings->SaveDword(UseTLB,		   _Settings->LoadDword(ROM_UseTlb));
+	//_Settings->SaveDword(AudioSignal,   _Settings->LoadDword(ROM_AudioSignal));
+	//_Settings->SaveDword(UseJumpTable,  _Settings->LoadDword(ROM_UseJumpTable));
+	//_Settings->SaveDword(RomInMemory,   _Settings->LoadDword(ROM_RomInMemory));
+	//_Settings->SaveDword(SyncViaAudio,  _Settings->LoadDword(ROM_SyncAudio));
+	//_Settings->SaveDword(FirstDMA,      true);
+	//_Settings->SaveDword(CurrentSaveState,_Settings->LoadDword(Game_LastSaveSlot));	
 
-	if (_Settings->LoadDword(CounterFactor) == -1) { _Settings->SaveDword(CounterFactor, (DWORD)2); }
-	if (_Settings->LoadDword(BlockLinking) == -1)  { _Settings->SaveDword(BlockLinking, _Settings->LoadDword(SYSTEM_BlockLinking)); }
+	//if (_Settings->LoadDword(CounterFactor) == -1) { _Settings->SaveDword(CounterFactor, (DWORD)2); }
+	//if (_Settings->LoadDword(BlockLinking) == -1)  { _Settings->SaveDword(BlockLinking, _Settings->LoadDword(SYSTEM_BlockLinking)); }
 	
 	DWORD hertz = 60;
 	switch (m_Country) {
@@ -509,9 +509,7 @@ void CN64Rom::LoadRomSettings (void) {
 		hertz = 50;
 		break;
 	}
-	_Settings->SaveDword(ScreenHertz,hertz);
-
-
+	//_Settings->SaveDword(ScreenHertz,hertz);
 }
 
 //Save the settings of the loaded rom, so all loaded settings about rom will be identified with

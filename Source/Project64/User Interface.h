@@ -41,6 +41,7 @@ typedef struct {
 
 class CN64System;
 
+#include <atlbase.h>
 #include "./WTL App.h"
 #include ".\\User Interface\\Rom Browser.h"
 #include ".\\User Interface\\Gui Class.h"

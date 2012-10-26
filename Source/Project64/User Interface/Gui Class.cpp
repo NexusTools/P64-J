@@ -725,13 +725,13 @@ DWORD CALLBACK CMainGui::MainGui_Proc (WND_HANDLE hWnd, DWORD uMsg, DWORD wParam
 					if (LOWORD(wParam) > 5000 && LOWORD(wParam) <= 5100 ) { 
 						CN64System * System  = _this->m_System;
 						CPlugins * Plugins = System->Plugins();
-						if (Plugins->RSP() && Plugins->RSP()->ProcessMenuItem != NULL) {
+						if (Plugins->RSP()) {
 							Plugins->RSP()->ProcessMenuItem(LOWORD(wParam));
 						}
 					} else if (LOWORD(wParam) > 5100 && LOWORD(wParam) <= 5200 ) { 
 						CN64System * System  = _this->m_System;
 						CPlugins * Plugins = System->Plugins();
-						if (Plugins->Gfx() && Plugins->Gfx()->ProcessMenuItem != NULL) {
+						if (Plugins->Gfx()) {
 							WriteTrace(TraceGfxPlugin,"ProcessMenuItem: Starting");
 							Plugins->Gfx()->ProcessMenuItem(LOWORD(wParam));
 							WriteTrace(TraceGfxPlugin,"ProcessMenuItem: Done");

@@ -2406,10 +2406,12 @@ void Compile_R4300i_SDR (CBlockSection * Section) {
 void Compile_R4300i_CACHE (CBlockSection * Section){
 	CPU_Message("  %X %s",Section->CompilePC,R4300iOpcodeName(Opcode.Hex,Section->CompilePC));
 
+#ifdef tofix
 	if (_Settings->LoadDword(SMM_Cache) == 0)
 	{
 		return;
 	}
+#endif
 
 	switch(Opcode.rt) {
 	case 0:
@@ -2429,7 +2431,7 @@ void Compile_R4300i_CACHE (CBlockSection * Section){
 			Push(x86_EAX);
 		}
 		MoveConstToX86reg((DWORD)g_N64System->GetRecompiler(),x86_ECX);		
-		Call_Direct(AddressOf(CRecompiler::ClearRecompCode_Virt), "CRecompiler::ClearRecompCode_Virt");
+		Call_Direct(AddressOf(&CRecompiler::ClearRecompCode_Virt), "CRecompiler::ClearRecompCode_Virt");
 		Popad();
 		break;
 	case 1:
@@ -4843,7 +4845,7 @@ void Compile_R4300i_COP0_MT (CBlockSection * Section) {
 		Pushad();
 		Call_Direct(SetFpuLocations,"SetFpuLocations");
 		Popad();
-		*(BYTE *)(Jump)= (BYTE )(((BYTE )(RecompPos)) - (((BYTE )(Jump)) + 1));
+		SetJump8(Jump,RecompPos);
 				
 		//TestConstToX86Reg(STATUS_FR,OldStatusReg);
 		//BreakPoint(__FILE__,__LINE__); //g_N64System->GetRecompiler()->CompileExit (Section,Section->CompilePC+4,Section->RegWorking,ExitResetRecompCode,FALSE,JneLabel32);

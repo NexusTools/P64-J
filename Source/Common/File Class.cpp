@@ -15,7 +15,6 @@ CFile::CFile(HANDLE hFile) :
 	{
 		ATLASSERT(hFile != 0);
 	}
-
 }
 
 CFile::~CFile()
@@ -26,14 +25,14 @@ CFile::~CFile()
 	}
 }
 
-CFile::CFile(LPCTSTR lpszFileName, DWORD nOpenFlags) :
+CFile::CFile(LPCTSTR lpszFileName, ULONG nOpenFlags) :
 	m_hFile(INVALID_HANDLE_VALUE),
 	m_bCloseOnDelete(true)
 {
 	Open(lpszFileName, nOpenFlags);
 }
 
-bool CFile::Open(LPCTSTR lpszFileName, DWORD nOpenFlags)
+bool CFile::Open(LPCTSTR lpszFileName, ULONG nOpenFlags)
 {
 	if (!Close())
 	{
@@ -48,7 +47,7 @@ bool CFile::Open(LPCTSTR lpszFileName, DWORD nOpenFlags)
 	m_bCloseOnDelete = true;
 	m_hFile = INVALID_HANDLE_VALUE;
 
-	DWORD dwAccess = 0;
+	ULONG dwAccess = 0;
 	switch (nOpenFlags & 3)
 	{
 	case modeRead:
@@ -68,9 +67,11 @@ bool CFile::Open(LPCTSTR lpszFileName, DWORD nOpenFlags)
 	WORD       ostype   = osver.GetOSType();		
 	BOOL       is_NT    =((ostype & OS_WINNT) != 0);
 
+
 	// map share mode
-	DWORD dwShareMode = FILE_SHARE_WRITE|FILE_SHARE_READ;
-	if (is_NT) { dwShareMode |= FILE_SHARE_DELETE; }
+	ULONG dwShareMode = 0;
+	
+	dwShareMode = FILE_SHARE_READ | FILE_SHARE_WRITE;
 	if ((nOpenFlags & shareDenyWrite) == shareDenyWrite) { dwShareMode &= ~FILE_SHARE_WRITE; }
 	if ((nOpenFlags & shareDenyRead) == shareDenyRead)   { dwShareMode &= ~FILE_SHARE_READ; }
 	if ((nOpenFlags & shareExclusive) == shareExclusive) { dwShareMode = 0; }
@@ -82,7 +83,7 @@ bool CFile::Open(LPCTSTR lpszFileName, DWORD nOpenFlags)
 	sa.bInheritHandle = (nOpenFlags & modeNoInherit) == 0;
 
 	// map creation flags
-	DWORD dwCreateFlag = 0;
+	ULONG dwCreateFlag = 0;
 	if (nOpenFlags & modeCreate)
 	{
 		if (nOpenFlags & modeNoTruncate)
@@ -98,7 +99,7 @@ bool CFile::Open(LPCTSTR lpszFileName, DWORD nOpenFlags)
 		dwCreateFlag, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE)
 	{ //#define ERROR_PATH_NOT_FOUND             3L
-		DWORD err = GetLastError();
+		//ULONG err = GetLastError();
 		return false;
 	}
 	m_hFile = hFile;
@@ -119,7 +120,7 @@ bool CFile::Close()
 	return bError;
 }
 
-DWORD CFile::SeekToEnd ( void )
+ULONG CFile::SeekToEnd ( void )
 { 
 	return Seek(0, CFile::end); 
 }
@@ -144,14 +145,14 @@ bool CFile::Flush()
 	return ::FlushFileBuffers(m_hFile) != 0;
 }
 
-bool CFile::Write(const void* lpBuf, DWORD nCount)
+bool CFile::Write(const void* lpBuf, ULONG nCount)
 {
 	if (nCount == 0)
 	{
 		return true;     // avoid Win32 "null-write" option
 	}
 
-	DWORD nWritten = 0;
+	ULONG nWritten = 0;
 	if (!::WriteFile(m_hFile, lpBuf, nCount, &nWritten, NULL))
 	{
 		return false;
@@ -165,14 +166,14 @@ bool CFile::Write(const void* lpBuf, DWORD nCount)
 	return true;
 }
 
-DWORD CFile::Read(void* lpBuf, DWORD nCount)
+ULONG CFile::Read(void* lpBuf, ULONG nCount)
 {
 	if (nCount == 0)
 	{
 		return 0;   // avoid Win32 "null-read"
 	}
 
-	DWORD dwRead = 0;
+	ULONG dwRead = 0;
 	if (!::ReadFile(m_hFile, lpBuf, nCount, &dwRead, NULL))
 	{
 		return 0;
@@ -182,8 +183,8 @@ DWORD CFile::Read(void* lpBuf, DWORD nCount)
 
 long CFile::Seek(long lOff, SeekPosition nFrom)
 {
-	DWORD dwNew = ::SetFilePointer(m_hFile, lOff, NULL, (DWORD)nFrom);
-	if (dwNew  == (DWORD)-1)
+	ULONG dwNew = ::SetFilePointer(m_hFile, lOff, NULL, (ULONG)nFrom);
+	if (dwNew  == (ULONG)-1)
 	{
 		return -1;
 	}
@@ -191,19 +192,19 @@ long CFile::Seek(long lOff, SeekPosition nFrom)
 	return dwNew;
 }
 
-DWORD CFile::GetPosition() const
+ULONG CFile::GetPosition() const
 {
 	return ::SetFilePointer(m_hFile, 0, NULL, FILE_CURRENT);
 }
 
-bool CFile::SetLength(DWORD dwNewLen)
+bool CFile::SetLength(ULONG dwNewLen)
 {
 	Seek((LONG)dwNewLen, begin);
 
 	return ::SetEndOfFile(m_hFile) != 0;
 }
 
-DWORD CFile::GetLength() const
+ULONG CFile::GetLength() const
 {
 	return GetFileSize(m_hFile,0);
 }
@@ -212,3 +213,4 @@ bool CFile::SetEndOfFile()
 {
 	return ::SetEndOfFile(m_hFile) != 0;
 }
+

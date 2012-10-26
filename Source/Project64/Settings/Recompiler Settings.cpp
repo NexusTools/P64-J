@@ -12,12 +12,12 @@ bool CRecompilerSettings::bRomInMemory;        //= _Settings->LoadDword(ProfileC
 CRecompilerSettings::CRecompilerSettings()
 {
 	bShowRecompMemSize = _Settings->LoadDword(ShowRecompMemSize) != 0;
-	bSMM_Protect       = _Settings->LoadDword(SMM_Protect) != 0;
-	bSMM_ValidFunc     = _Settings->LoadDword(SMM_ValidFunc) != 0;
-	bSMM_PIDMA         = _Settings->LoadDword(SMM_PIDMA) != 0;
-	bSMM_TLB           = _Settings->LoadDword(SMM_TLB) != 0;
-	bProfiling         = _Settings->LoadDword(ProfileCode) != 0;
-	bRomInMemory       = _Settings->LoadDword(RomInMemory) != 0;
+	bSMM_Protect       = false; //_Settings->LoadDword(SMM_Protect) != 0;
+	bSMM_ValidFunc     = false; //_Settings->LoadDword(SMM_ValidFunc) != 0;
+	bSMM_PIDMA         = false; //_Settings->LoadDword(SMM_PIDMA) != 0;
+	bSMM_TLB           = false; //_Settings->LoadDword(SMM_TLB) != 0;
+	bProfiling         = false; //_Settings->LoadDword(ProfileCode) != 0;
+	bRomInMemory       = false; //_Settings->LoadDword(RomInMemory) != 0;
 	_Settings->RegisterChangeCB(ShowRecompMemSize,this,(CSettings::SettingChangedFunc)ShowRecompMemSizeChanged);
 	_Settings->RegisterChangeCB(ProfileCode,this,(CSettings::SettingChangedFunc)ProfilingChanged);
 	_Settings->RegisterChangeCB(RomInMemory,this,(CSettings::SettingChangedFunc)RomInMemoryChanged);

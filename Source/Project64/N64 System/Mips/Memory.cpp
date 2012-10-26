@@ -86,10 +86,12 @@ void CMipsMemory::AllocateSystemMemory (void)
 	}
 	
 	DWORD RdramMemorySize = 0x20000000;
+#ifdef tofix
 	if ((CPU_TYPE)_Settings->LoadDword(ROM_CPUType) == CPU_SyncCores)
 	{
 		RdramMemorySize = 0x18000000;
 	}
+#endif
 	RDRAM = (unsigned char *) VirtualAlloc( NULL, RdramMemorySize, MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
 	if(RDRAM==NULL) {  
 		_Notify->FatalError(GS(MSG_MEM_ALLOC_ERROR));
@@ -107,6 +109,7 @@ void CMipsMemory::AllocateSystemMemory (void)
 	DMEM  = (unsigned char *)(RDRAM+0x04000000);
 	IMEM  = (unsigned char *)(RDRAM+0x04001000);
 
+#ifdef tofix
 	if (_Settings->LoadDword(RomInMemory))
 	{
 		if(VirtualAlloc(RDRAM + 0x10000000, m_RomFileSize, MEM_COMMIT, PAGE_READWRITE)==NULL) {
@@ -116,6 +119,7 @@ void CMipsMemory::AllocateSystemMemory (void)
 		ROM = (unsigned char *)(RDRAM+0x10000000);
 		_Rom->UnallocateRomImage();
 	}
+#endif
 	memset(PIF_Ram,0,sizeof(PIF_Ram));
 	TLB_Reset(true);
 }
@@ -129,7 +133,7 @@ bool CMipsMemory::AllocateRecompilerMemory ( bool AllocateJumpTable )
 	JumpTable = NULL;
 	if (AllocateJumpTable)
 	{
-		DWORD JumpTableSize = _Settings->LoadDword(RomInMemory) ? 0x20000000 : 0x10000000;
+		DWORD JumpTableSize = /*_Settings->LoadDword(RomInMemory) ? 0x20000000 :*/ 0x10000000;
 		JumpTable = (void **)VirtualAlloc( NULL, JumpTableSize, MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
 		if( JumpTable == NULL ) {  
 			_Notify->DisplayError(MSG_MEM_ALLOC_ERROR);
@@ -147,6 +151,7 @@ bool CMipsMemory::AllocateRecompilerMemory ( bool AllocateJumpTable )
 			return FALSE;
 		}
 
+#ifdef tofix
 		if (_Settings->LoadDword(RomInMemory))
 		{
 			if(VirtualAlloc((BYTE *)JumpTable + 0x10000000, m_RomFileSize, MEM_COMMIT, PAGE_READWRITE)==NULL) {
@@ -154,7 +159,7 @@ bool CMipsMemory::AllocateRecompilerMemory ( bool AllocateJumpTable )
 				return FALSE;
 			}
 		}
-		
+#endif		
 	}
 
 	/* Recomp code */
@@ -193,7 +198,7 @@ void CMipsMemory::CheckRecompMem( BYTE * RecompPos )
 }
 
 void CMipsMemory::FixRDramSize ( void ) {
-	if (_Settings->LoadDword(RamSize) != m_AllocatedRdramSize) {
+	if (0x400000 /*_Settings->LoadDword(RamSize)*/ != m_AllocatedRdramSize) {
 		if (m_AllocatedRdramSize == 0x400000) { 
 			if (VirtualAlloc(RDRAM + 0x400000, 0x400000, MEM_COMMIT, PAGE_READWRITE)==NULL) {
 				_Notify->FatalError(GS(MSG_MEM_ALLOC_ERROR));
@@ -213,7 +218,7 @@ bool CMipsMemory::Store64 ( DWORD VAddr, QWORD Value, MemorySize Size ) {
 			_Notify->BreakPoint(__FILE__,__LINE__);
 			return false;
 		}
-		if (PAddr > _Settings->LoadDword(RamSize) && 
+		if (PAddr > 0x400000 /*_Settings->LoadDword(RamSize)*/ && 
 			(PAddr < 0x04000000 || PAddr > 0x04002000))
 		{			
 //			switch (Size) {
@@ -1144,7 +1149,7 @@ int CMipsMemory::SystemMemoryFilter( DWORD dwExptCode, void * lpExceptionPointer
 		int End = (Start + (lpEP->ContextRecord->Ecx << 2) - 1);
 		
 		if ((int)Start < 0) {  _Notify->BreakPoint(__FILE__,__LINE__); }
-		if ((int)End < _Settings->LoadDword(RamSize)) {
+		if ((int)End < 0x400000 /*_Settings->LoadDword(RamSize)*/) {
 			for ( int count = Start & ~0x1000; count < End; count += 0x1000 ) {
 				CBClass->WriteToProtectedMemory(Start, 0xFFF);
 			}			

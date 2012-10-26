@@ -799,7 +799,8 @@ int Map_MemoryStack (CBlockSection * Section, int Reg, bool MapRegister)
 	int CurrentMap = -1;
 
 	// check to see what the current mapping is
-	for (int x86Reg = 0; x86Reg < 10; x86Reg ++ ) {
+	int x86Reg = 0;
+	for (; x86Reg < 10; x86Reg ++ ) {
 		if (Section->x86Mapped(x86Reg) == CRegInfo::Stack_Mapped) {
 			CurrentMap = x86Reg;
 		}

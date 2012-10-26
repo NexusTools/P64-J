@@ -37,11 +37,11 @@ CTraceModule * CTraceLog::RemoveTraceModule ( CTraceModule * TraceModule )
 {
 	CGuard Guard(m_CS);
 
-	for (int i = 0; i < (int)m_Modules.size(); i++ )
+	for (std::vector<CTraceModule *>::iterator itr = m_Modules.begin(); itr != m_Modules.end(); itr++)
 	{
-		if (m_Modules[i] == TraceModule)
+		if ((*itr) == TraceModule)
 		{
-			m_Modules.erase(&m_Modules[i]);
+			m_Modules.erase(itr);
 			return TraceModule;
 		}
 	}
@@ -110,6 +110,8 @@ void CTraceLog::WriteTrace ( TraceType Type, LPCTSTR Message)
 		else if ((Type & TraceRecompiler)!= 0) { nPos += _stprintf(pBuffer+nPos,_T("%s"),_T("Recomp : ")); }
 		else if ((Type & TraceRSP       )!= 0) { nPos += _stprintf(pBuffer+nPos,_T("%s"),_T("RSP    : ")); }
 		else if ((Type & TraceTLB       )!= 0) { nPos += _stprintf(pBuffer+nPos,_T("%s"),_T("TLB    : ")); }
+		else if ((Type & TraceValidate  )!= 0) { nPos += _stprintf(pBuffer+nPos,_T("%s"),_T("Valid  : ")); }
+		else if ((Type & TraceAudio     )!= 0) { nPos += _stprintf(pBuffer+nPos,_T("%s"),_T("Audio  : ")); }
 		else { nPos += _stprintf(pBuffer+nPos,_T("%s"),_T("Unknown: ")); }
 
 		for (int i = 0; i < (int)m_Modules.size(); i++ )
@@ -188,15 +190,15 @@ CTraceFileLog::CTraceFileLog(LPCTSTR FileName, bool FlushFile ) :
 }
 
 CTraceFileLog::CTraceFileLog (LPCTSTR FileName, bool FlushFile, LOG_OPEN_MODE eMode, DWORD dwMaxFileSize) :
-m_FlushFile(FlushFile)
+	m_FlushFile(FlushFile)
 {
     enum { MB = 1024 * 1024 };
 
 	m_hLogFile.SetFlush(false);
 	m_hLogFile.SetTruncateFile(true);
 
-	if(dwMaxFileSize > 10240)
-		m_hLogFile.SetMaxFileSize(dwMaxFileSize);
+	if(dwMaxFileSize < 2048 && dwMaxFileSize > 2)
+		m_hLogFile.SetMaxFileSize(dwMaxFileSize * MB);
 	else
 		m_hLogFile.SetMaxFileSize(5 * MB);
 

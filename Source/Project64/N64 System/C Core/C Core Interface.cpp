@@ -188,21 +188,21 @@ void CC_Core::SetSettings  ( )
 		}
 		g_ShowCPUPer          = g_Settings->LoadDword(ShowCPUPer);
 		g_ShowTLBMisses       = false;
-		g_UseTlb              = g_Settings->LoadDword(UseTLB);
-		g_CPU_Type            = (CPU_TYPE)g_Settings->LoadDword(CPUType);
-		g_SaveUsing           = (SAVE_CHIP_TYPE)g_Settings->LoadDword(SaveChipType);
-		g_AudioSignal         = g_Settings->LoadDword(AudioSignal);
-		g_RdramSize           = g_Settings->LoadDword(RamSize);
-		g_ShowPifRamErrors    = g_Settings->LoadDword(ShowPifRamErrors);
-		g_CountPerOp          = g_Settings->LoadDword(CounterFactor);
-		g_GenerateLog         = g_Settings->LoadDword(GenerateDebugLog);
-		g_DelaySI             = g_Settings->LoadDword(DelaySI);
-		g_SPHack              = g_Settings->LoadDword(ROM_SPHack);
-		g_FixedAudio          = g_Settings->LoadDword(ROM_FixedAudio);
-		g_LogX86Code          = g_Settings->LoadDword(GenerateLogFiles);
-		g_LookUpMode          = (FUNC_LOOKUP_METHOD)g_Settings->LoadDword(FuncLookupMode);
-		g_DisableRegCaching   = !g_Settings->LoadDword(ROM_RegCache);
-		g_UseLinking          = g_Settings->LoadDword(BlockLinking);
+		g_UseTlb              = true; //g_Settings->LoadDword(UseTLB);
+		g_CPU_Type            = CPU_Recompiler; //(CPU_TYPE)g_Settings->LoadDword(CPUType);
+		g_SaveUsing           = SaveChip_Auto; //(SAVE_CHIP_TYPE)g_Settings->LoadDword(SaveChipType);
+		g_AudioSignal         = false; //g_Settings->LoadDword(AudioSignal);
+		g_RdramSize           = 0x400000; //g_Settings->LoadDword(RamSize);
+		g_ShowPifRamErrors    = false; //g_Settings->LoadDword(ShowPifRamErrors);
+		g_CountPerOp          = 2; //g_Settings->LoadDword(CounterFactor);
+		g_GenerateLog         = false; //g_Settings->LoadDword(GenerateDebugLog);
+		g_DelaySI             = false; //g_Settings->LoadDword(DelaySI);
+		g_SPHack              = true; //g_Settings->LoadDword(ROM_SPHack);
+		g_FixedAudio          = false; //g_Settings->LoadDword(ROM_FixedAudio);
+		g_LogX86Code          = true; //g_Settings->LoadDword(GenerateLogFiles);
+		g_LookUpMode          = FuncFind_PhysicalLookup; //(FUNC_LOOKUP_METHOD)g_Settings->LoadDword(FuncLookupMode);
+		g_DisableRegCaching   = false; //!g_Settings->LoadDword(ROM_RegCache);
+		g_UseLinking          = false; //g_Settings->LoadDword(BlockLinking);
 		g_ShowCompMem         = false;
 		strcpy(g_RomName, g_Settings->LoadString(ROM_NAME).c_str());
 	}
@@ -422,7 +422,7 @@ void DisplayMessage2 ( const char * Message, ... )
 
 const char * GetAppName ( void )
 {
-	static stdstr szAppName = g_Settings->LoadString(ApplicationName);
+	static stdstr szAppName = "Project64"; //g_Settings->LoadString(ApplicationName);
 	return szAppName.c_str();
 }
 
@@ -455,7 +455,7 @@ void DacrateChanged ( enum SystemType Type )
 
 BOOL Close_C_CPU ( void )
 {
-	if (g_Settings == NULL || !g_Settings->LoadDword(CPU_Running))
+	if (g_Settings == NULL || !g_Settings->LoadBool(CPU_Running))
 	{
 		return true;
 	}

@@ -48,14 +48,14 @@ CRomBrowser::CRomBrowser (WND_HANDLE & MainWindow, WND_HANDLE & StatusWindow, CN
 	AddField("Notes (default plugins)", 3, RB_PluginNotes,   188,RB_NOTES_PLUGIN);
 	AddField("Notes (User)",           -1, RB_UserNotes,     100,RB_NOTES_USER);
 	AddField("Cartridge ID",           -1, RB_CartridgeID,   100,RB_CART_ID);
-	AddField("Manufacturer",           -1, RB_Manufacturer,  100,RB_MANUFACTUER,);
-	AddField("Country",                -1, RB_Country,       100,RB_COUNTRY,);
-	AddField("Developer",              -1, RB_Developer,     100,RB_DEVELOPER,);
-	AddField("CRC1",                   -1, RB_Crc1,          100,RB_CRC1,);
-	AddField("CRC2",                   -1, RB_Crc2,          100,RB_CRC2,);
-	AddField("CIC Chip",               -1, RB_CICChip,       100,RB_CICCHIP,);
-	AddField("Release Date",           -1, RB_ReleaseDate,   100,RB_RELEASE_DATE,);
-	AddField("Genre",                  -1, RB_Genre,         100,RB_GENRE,);
+	AddField("Manufacturer",           -1, RB_Manufacturer,  100,RB_MANUFACTUER);
+	AddField("Country",                -1, RB_Country,       100,RB_COUNTRY);
+	AddField("Developer",              -1, RB_Developer,     100,RB_DEVELOPER);
+	AddField("CRC1",                   -1, RB_Crc1,          100,RB_CRC1);
+	AddField("CRC2",                   -1, RB_Crc2,          100,RB_CRC2);
+	AddField("CIC Chip",               -1, RB_CICChip,       100,RB_CICCHIP);
+	AddField("Release Date",           -1, RB_ReleaseDate,   100,RB_RELEASE_DATE);
+	AddField("Genre",                  -1, RB_Genre,         100,RB_GENRE);
 	AddField("Players",                -1, RB_Players,       100,RB_PLAYERS);
 	AddField("Force Feedback",         -1, RB_ForceFeedback, 100,RB_FORCE_FEEDBACK);
 	AddField("File Format",            -1, RB_FileFormat,    100,RB_FILE_FORMAT);
@@ -66,7 +66,7 @@ CRomBrowser::CRomBrowser (WND_HANDLE & MainWindow, WND_HANDLE & StatusWindow, CN
 	if (_Settings == NULL) { return; }
 	
 	//Load the real positions from the settings
-	for (int Field = 0; Field < m_Fields.size(); Field++) 
+	for (size_t Field = 0; Field < m_Fields.size(); Field++) 
 	{
 		_Settings->LoadDwordIndex(RomBrowserPosIndex,Field,(DWORD &)m_Fields[Field].Pos );
 		_Settings->LoadDwordIndex(RomBrowserWidthIndex,Field,(DWORD &)m_Fields[Field].ColWidth);
@@ -123,7 +123,7 @@ int CRomBrowser::CalcSortPosition (DWORD lParam)
 			break;
 		}
 
-		int index;
+		size_t index;
 		for (index = 0; index < m_Fields.size(); index++) {
 			if (_stricmp(m_Fields[index].Name,SortFieldName.c_str()) == 0) { break; }
 		}
@@ -137,7 +137,7 @@ int CRomBrowser::CalcSortPosition (DWORD lParam)
 		int LastTestPos = -1;
 		while (Start < End)
 		{
-			int TestPos = floor((Start + End) / 2);
+			int TestPos = (int)floor((float)((Start + End) / 2));
 			if (LastTestPos == TestPos)
 			{
 				TestPos += 1;
@@ -170,11 +170,11 @@ int CRomBrowser::CalcSortPosition (DWORD lParam)
 			else
 			{
 				//Find new start
-				float Left = Start;
-				float Right = TestPos;
+				float Left = (float)Start;
+				float Right = (float)TestPos;
 				while (Left < Right)
 				{
-					int NewTestPos = floor((Left + Right) / 2);
+					int NewTestPos = (int)floor((Left + Right) / 2);
 					if (LastTestPos == NewTestPos)
 					{
 						NewTestPos += 1;
@@ -194,7 +194,7 @@ int CRomBrowser::CalcSortPosition (DWORD lParam)
 						{
 							break;
 						}
-						Right = NewTestPos;
+						Right = (float)NewTestPos;
 					}
 					if (Result > 0)
 					{
@@ -962,8 +962,8 @@ void CRomBrowser::MenuSetText ( MENU_HANDLE hMenu, int MenuPos, const char * Tit
 	MenuInfo.cch = 256;
 
 	GetMenuItemInfo((HMENU)hMenu,MenuPos,TRUE,&MenuInfo);
-	if (strchr(Title,'\t') != NULL) { *(strchr(Title,'\t')) = '\0'; }
 	strcpy(String,Title);
+	if (strchr(String,'\t') != NULL) { *(strchr(String,'\t')) = '\0'; }
 	if (ShotCut) { sprintf(String,"%s\t%s",String,ShotCut); }
 	SetMenuItemInfo((HMENU)hMenu,MenuPos,TRUE,&MenuInfo);
 }
@@ -1488,7 +1488,8 @@ void CRomBrowser::SaveRomListColoumnInfo(void) {
 	lvColumn.mask = LVCF_WIDTH;
 	
 	for (int Coloumn = 0;ListView_GetColumn((HWND)m_hRomList,Coloumn,&lvColumn); Coloumn++) {
-		for (int index = 0; index < m_Fields.size(); index++) {
+		int index = 0;
+		for (; index < m_Fields.size(); index++) {
 			if (m_Fields[index].Pos == Coloumn) { break; }
 		}
 		m_Fields[index].ColWidth = lvColumn.cx;
@@ -1616,8 +1617,10 @@ void CRomBrowser::ShowRomList (void) {
 	m_Visible = true;
 
 	RECT rcWindow;
-	GetClientRect((HWND)m_MainWindow,&rcWindow);
-	ResizeRomList(rcWindow.right,rcWindow.bottom);
+	if (GetClientRect((HWND)m_MainWindow,&rcWindow))
+	{
+		ResizeRomList(rcWindow.right,rcWindow.bottom);
+	}
 
 	InvalidateRect((HWND)m_hRomList,NULL,TRUE);
 

@@ -55,6 +55,7 @@ void CTLB::TLB_Reset (bool InvalidateTLB) {
 	for (count = 0; count < 32; count ++) { SetupTLB_Entry(count,false); }
 	//GE Hack
 	
+#ifdef tofix
 	if (_Settings->LoadDword(ROM_TLB_VAddrStart) != 0)
 	{
 		DWORD Start = _Settings->LoadDword(ROM_TLB_VAddrStart); //0x7F000000;
@@ -66,6 +67,7 @@ void CTLB::TLB_Reset (bool InvalidateTLB) {
 			TLB_WriteMap[count >> 12] = ((DWORD)m_BasePAddr + (count - Start + PAddr)) - count;
 		}
 	}
+#endif
 }
 
 bool CTLB::TLB_AddressDefined ( DWORD VAddr) {
