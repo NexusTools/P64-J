@@ -12,11 +12,10 @@
 #undef LinkBlocks
 #undef CountPerOp
 
-CRecompiler::CRecompiler(CProfiling & Profile, bool & EndEmulation, bool SyncSystem) :
+CRecompiler::CRecompiler(CProfiling & Profile, bool & EndEmulation ) :
 	m_Profile(Profile),
 	PROGRAM_COUNTER(_Reg->m_PROGRAM_COUNTER),
 	m_EndEmulation(EndEmulation),
-	m_SyncSystem(SyncSystem),
 	m_FunctionsDelaySlot()
 {
 
@@ -91,10 +90,11 @@ void CRecompiler::RecompilerMain_VirtualTable ( void )
 {
 	while(!m_EndEmulation) 
 	{
-		CFunctionMap::PCCompiledFunc_TABLE table = m_FunctionTable[PROGRAM_COUNTER >> 0xC];
+		CFunctionMap::PCCompiledFunc_TABLE & table = m_FunctionTable[PROGRAM_COUNTER >> 0xC];
+		DWORD TableEntry = (PROGRAM_COUNTER & 0xFFF) >> 2;
 		if (table)
 		{
-			CCompiledFunc * info = table[(PROGRAM_COUNTER & 0xFFF) >> 2];
+			CCompiledFunc * info = table[TableEntry];
 			if (info != NULL)
 			{
 				(info->Function())();
@@ -121,6 +121,18 @@ void CRecompiler::RecompilerMain_VirtualTable ( void )
 		{
 			break;
 		}
+
+		if (table == NULL) 
+		{
+			table = new PCCompiledFunc[(0x1000 >> 2)]; 
+			if (table == NULL)
+			{
+				Notify().FatalError(MSG_MEM_ALLOC_ERROR);
+			}
+			memset(table,0,sizeof(PCCompiledFunc) * (0x1000 >> 2));
+		}
+
+		table[TableEntry] = info;
 		(info->Function())();
 	}
 }
@@ -714,7 +726,7 @@ CCompiledFunc * CRecompiler::CompileDelaySlot(DWORD PC)
 	MoveX86regToVariable(x86Reg,&PROGRAM_COUNTER,"PROGRAM_COUNTER");
 	MoveConstToVariable(NORMAL,&NextInstruction,"NextInstruction");
 	if (CPU_Type == CPU_SyncCores) { Call_Direct(SyncToPC, "SyncToPC"); }
-	Ret();
+	ExitCodeBlock();
 	CompileExitCode(BlockInfo);
 	CPU_Message("====== End of recompiled code ======");
 	
@@ -2032,7 +2044,7 @@ CCompiledFunc * CRecompiler::CompilerCode ( void )
 	}
 	
 	CCompiledFunc * info = new CCompiledFunc(CodeBlock);
-
+#ifdef toremove
 	//if block linking then analysis
 	//
 
@@ -2068,6 +2080,7 @@ CCompiledFunc * CRecompiler::CompilerCode ( void )
 	}
 #endif
 	*/
+#endif
 	return info;
 }
 
