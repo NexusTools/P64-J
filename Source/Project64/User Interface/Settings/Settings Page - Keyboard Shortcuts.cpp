@@ -120,13 +120,13 @@ void COptionsShortCutsPage::OnRemoveClicked ( UINT Code, int id, HWND ctl )
 	HTREEITEM hSelectedItem = m_MenuItems.GetSelectedItem();
 	if (hSelectedItem == NULL) 
 	{ 
-		Notify().DisplayError(GS(MSG_NO_SEL_SHORTCUT));
+		_Notify->DisplayError(GS(MSG_NO_SEL_SHORTCUT));
 		return; 
 	}
 	HTREEITEM hParent = m_MenuItems.GetParentItem(hSelectedItem);
 	if (hParent == NULL)
 	{
-		Notify().DisplayError(GS(MSG_NO_SEL_SHORTCUT)); 
+		_Notify->DisplayError(GS(MSG_NO_SEL_SHORTCUT)); 
 		return; 
 	}
 
@@ -138,7 +138,7 @@ void COptionsShortCutsPage::OnRemoveClicked ( UINT Code, int id, HWND ctl )
 	int index = m_CurrentKeys.GetCurSel();
 	if (index < 0) 
 	{
-		Notify().DisplayError(GS(MSG_NO_SEL_SHORTCUT)); 
+		_Notify->DisplayError(GS(MSG_NO_SEL_SHORTCUT)); 
 		return; 
 	}
 	ShortCut->RemoveItem((CMenuShortCutKey *)m_CurrentKeys.GetItemData(index));
@@ -161,7 +161,7 @@ void COptionsShortCutsPage::OnAssignClicked ( UINT Code, int id, HWND ctl )
 	int index = m_VirtualKeyList.GetCurSel();
 	if (index < 0) 
 	{ 
-		Notify().DisplayError(GS(MSG_NO_SHORTCUT_SEL));
+		_Notify->DisplayError(GS(MSG_NO_SHORTCUT_SEL));
 		return;
 	}
 
@@ -176,13 +176,13 @@ void COptionsShortCutsPage::OnAssignClicked ( UINT Code, int id, HWND ctl )
 	HTREEITEM hSelectedItem = m_MenuItems.GetSelectedItem();
 	if (hSelectedItem == NULL) 
 	{ 
-		Notify().DisplayError(GS(MSG_NO_MENUITEM_SEL)); 
+		_Notify->DisplayError(GS(MSG_NO_MENUITEM_SEL)); 
 		return; 
 	}
 	HTREEITEM hParent = m_MenuItems.GetParentItem(hSelectedItem);
 	if (hParent == NULL)
 	{
-		Notify().DisplayError(GS(MSG_NO_MENUITEM_SEL)); 
+		_Notify->DisplayError(GS(MSG_NO_MENUITEM_SEL)); 
 		return; 
 	}
 
@@ -191,7 +191,7 @@ void COptionsShortCutsPage::OnAssignClicked ( UINT Code, int id, HWND ctl )
 	LanguageStringID strid = m_ShortCuts.GetMenuItemName(key,bCtrl,bAlt,bShift,AccessLevel);
 	if (strid != EMPTY_STRING) 
 	{
-		Notify().DisplayError(GS(MSG_MENUITEM_ASSIGNED));
+		_Notify->DisplayError(GS(MSG_MENUITEM_ASSIGNED));
 		return;
 	}
 	ShortCut->AddShortCut(key,bCtrl,bAlt,bShift,AccessLevel,true,false);
@@ -312,7 +312,7 @@ void COptionsShortCutsPage::InputGetKeys (void)
 					SendDlgItemMessage(IDC_CTL,BM_SETCHECK, (GetKeyState(VK_CONTROL) & 0x80) != 0 ? BST_CHECKED : BST_UNCHECKED,0);
 					SendDlgItemMessage(IDC_ALT,BM_SETCHECK, (GetKeyState(VK_MENU) & 0x80) != 0 ? BST_CHECKED : BST_UNCHECKED,0);
 					SendDlgItemMessage(IDC_SHIFT,BM_SETCHECK, (GetKeyState(VK_SHIFT) & 0x80) != 0 ? BST_CHECKED : BST_UNCHECKED,0);
-					SendMessage(WM_COMMAND,MAKELPARAM(IDC_VIRTUALKEY,LBN_SELCHANGE),(LPARAM)::GetDlgItem(m_hWnd,IDC_VIRTUALKEY));
+					SendMessage(WM_COMMAND,MAKELPARAM(IDC_VIRTUALKEY,LBN_SELCHANGE),(LPARAM)::GetDlgItem(m_hWnd, IDC_VIRTUALKEY));
 					SetForegroundWindow(GetParent());
 					::DestroyWindow(hKeyDlg);
 				}

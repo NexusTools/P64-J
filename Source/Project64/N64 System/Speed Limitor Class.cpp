@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include <MMSystem.h>
+
 #pragma comment(lib, "winmm.lib") 
 
 CSpeedLimitor::CSpeedLimitor(CNotification * const _Notify ) :

@@ -57,8 +57,6 @@ void ResetX86Logs       ( void );
 void SyncToPC           ( void );
 void CloseSaveChips     ( void );
 
-BOOL ClearRecompCodeProtectMem  ( DWORD PhysicalAddress, int length );
-
 //Timer functions
 void ResetTimer ( void );
 void GenerateProfileLog ( void );
@@ -67,13 +65,12 @@ DWORD StopTimer  ( void );
 
 //settings
 extern BOOL g_ShowUnhandledMemory, g_ShowCPUPer, g_ShowTLBMisses, g_UseTlb, 
-	g_HaveDebugger, g_AudioSignal, g_ShowDListAListCount, g_ShowPifRamErrors,
-	g_GenerateLog, g_DelaySI, g_DisableRegCaching, g_ShowCompMem,
+	g_HaveDebugger, g_AudioSignal, g_ShowPifRamErrors,
+	g_GenerateLog, g_ShowCompMem,
 	g_UseLinking, g_FixedAudio, g_LogX86Code;
 extern DWORD g_RomFileSize, g_CountPerOp;
 extern enum CPU_TYPE g_CPU_Type;
 extern enum SAVE_CHIP_TYPE g_SaveUsing;
-extern enum CICChip g_CicChip;
 extern enum FUNC_LOOKUP_METHOD g_LookUpMode;
 extern char g_RomName [300];
 

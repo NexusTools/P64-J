@@ -2,12 +2,16 @@ class CMipsMemoryVM :
 	public CMipsMemory,
 	public CTransVaddr,
 	private CRecompilerOps,
-	private R4300iOp
+	private R4300iOp,
+	private CPifRam,
+	private CFlashram,
+	private CSram,
+	private CDMA
 {
 	CMipsMemory_CallBack * const m_CBClass;
 
 	//Memory Locations
-	BYTE          * m_RDRAM, * m_DMEM, * m_IMEM, m_PIF_Ram[0x40];
+	BYTE          * m_RDRAM, * m_DMEM, * m_IMEM;
 	DWORD         m_AllocatedRdramSize;
 
 	//Rom Information
@@ -27,10 +31,11 @@ class CMipsMemoryVM :
 	void FreeMemory           ( void );
 
 public:
-	       CMipsMemoryVM        ( CMipsMemory_CallBack * CallBack );
+	       CMipsMemoryVM        ( CMipsMemory_CallBack * CallBack, bool SavesReadOnly );
 	      ~CMipsMemoryVM        ( void );
 	
 	BOOL   Initialize   ( void );
+	void   Reset        ( bool EraseMemory );
 	
 	BYTE * Rdram        ( void );
 	DWORD  RdramSize    ( void );
@@ -56,6 +61,7 @@ public:
 
 	//Compilation Functions
 	void ResetMemoryStack    ( void );
+	void ResetTLB            ( void );
 	
 	void Compile_LB          ( void );
 	void Compile_LBU         ( void );
@@ -116,6 +122,8 @@ private:
 	int  SB_NonMemory         ( DWORD PAddr, BYTE Value );
 	int  SH_NonMemory         ( DWORD PAddr, WORD Value );
 	int  SW_NonMemory         ( DWORD PAddr, DWORD Value );
+
+	void Compile_StoreInstructClean (x86Reg AddressReg, int Length );
 
 	mutable char m_strLabelName[100];
 

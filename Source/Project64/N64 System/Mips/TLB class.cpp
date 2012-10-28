@@ -155,6 +155,10 @@ void CTLB::SetupTLB_Entry (int index, bool Random) {
 	if (!m_tlb[index].EntryDefined) { return; }
 
 	int FastIndx = index << 1;
+	if (m_FastTlb[FastIndx].VALID) 
+	{
+		m_CB->TLB_Unmaped(m_FastTlb[FastIndx].VSTART,m_FastTlb[FastIndx].Length);
+	}
 	m_FastTlb[FastIndx].Length = (m_tlb[index].PageMask.Mask << 12) + 0xFFF;
 	m_FastTlb[FastIndx].VSTART=m_tlb[index].EntryHi.VPN2 << 13;
 	m_FastTlb[FastIndx].VEND = m_FastTlb[FastIndx].VSTART + m_FastTlb[FastIndx].Length;
@@ -169,6 +173,10 @@ void CTLB::SetupTLB_Entry (int index, bool Random) {
 
 
 	FastIndx = (index << 1) + 1;
+	if (m_FastTlb[FastIndx].VALID) 
+	{
+		m_CB->TLB_Unmaped(m_FastTlb[FastIndx].VSTART,m_FastTlb[FastIndx].Length);
+	}
 	m_FastTlb[FastIndx].Length = (m_tlb[index].PageMask.Mask << 12) + 0xFFF;
 	m_FastTlb[FastIndx].VSTART=(m_tlb[index].EntryHi.VPN2 << 13) + (m_FastTlb[FastIndx].Length + 1);
 	m_FastTlb[FastIndx].VEND = m_FastTlb[FastIndx].VSTART + m_FastTlb[FastIndx].Length;
@@ -204,13 +212,6 @@ void CTLB::SetupTLB_Entry (int index, bool Random) {
 	}
 }
 
-#ifdef tofix
-bool CTLB::VAddrToRealAddr(DWORD VAddr, void * &RealAddress) {
-	if (TLB_ReadMap[VAddr >> 12] == 0) { return false; }
-	RealAddress = (BYTE *)(TLB_ReadMap[VAddr >> 12] + VAddr);
-	return true;
-}
-
 bool CTLB::PAddrToVAddr(DWORD PAddr, DWORD & VAddr, DWORD & Index )
 {
 	for (int i = Index; i < 64; i++)
@@ -226,5 +227,3 @@ bool CTLB::PAddrToVAddr(DWORD PAddr, DWORD & VAddr, DWORD & Index )
 	}
 	return false;
 }
-
-#endif

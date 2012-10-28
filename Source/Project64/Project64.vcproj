@@ -460,6 +460,18 @@
 						>
 					</File>
 					<File
+						RelativePath=".\N64 System\Mips\Dma.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Mips\Eeprom.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Mips\FlashRam.cpp"
+						>
+					</File>
+					<File
 						RelativePath="N64 System\Mips\Memory Labels Class.cpp"
 						>
 					</File>
@@ -484,7 +496,15 @@
 						>
 					</File>
 					<File
+						RelativePath=".\N64 System\Mips\Pif Ram.cpp"
+						>
+					</File>
+					<File
 						RelativePath="N64 System\Mips\Register Class.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Mips\Sram.cpp"
 						>
 					</File>
 					<File
@@ -524,18 +544,6 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\Dma.cpp"
-						>
-					</File>
-					<File
-						RelativePath="N64 System\C Core\Eeprom.cpp"
-						>
-					</File>
-					<File
-						RelativePath="N64 System\C Core\FlashRam.cpp"
-						>
-					</File>
-					<File
 						RelativePath=".\N64 System\C Core\Logging.cpp"
 						>
 					</File>
@@ -544,19 +552,11 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\Pif.cpp"
-						>
-					</File>
-					<File
 						RelativePath=".\N64 System\C Core\r4300i Commands.cpp"
 						>
 					</File>
 					<File
 						RelativePath="N64 System\C Core\r4300i Registers.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\N64 System\C Core\Sram.cpp"
 						>
 					</File>
 					<File

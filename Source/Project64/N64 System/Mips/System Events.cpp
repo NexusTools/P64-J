@@ -50,7 +50,7 @@ void CSystemEvents::ExecuteEvents ( void )
 			_Plugins->Gfx()->SoftReset();
 			break;
 		case SysEvent_ResetCPU_SoftDone:
-			_System->SoftReset();
+			_System->Reset(true,false);
 			break;
 		case SysEvent_Profile_GenerateLogs:
 			GenerateProfileLog();
@@ -171,4 +171,40 @@ void CSystemEvents::ExecuteEvents ( void )
 	{
 		PauseExecution();
 	}
+}
+
+void CSystemEvents::ChangePluginFunc ( void )
+{
+	_Notify->DisplayMessage(0,MSG_PLUGIN_INIT);
+	if (_Settings->LoadBool(Plugin_GFX_Changed))
+	{
+		_Plugins->Reset(PLUGIN_TYPE_GFX);
+	}
+	if (_Settings->LoadBool(Plugin_AUDIO_Changed))
+	{
+		_Plugins->Reset(PLUGIN_TYPE_AUDIO);
+	}	
+	if (_Settings->LoadBool(Plugin_CONT_Changed))
+	{
+		_Plugins->Reset(PLUGIN_TYPE_CONTROLLER);
+	}	
+	if (_Settings->LoadBool(Plugin_RSP_Changed) || 
+		_Settings->LoadBool(Plugin_AUDIO_Changed) || 
+		_Settings->LoadBool(Plugin_GFX_Changed))
+	{
+		_Plugins->Reset(PLUGIN_TYPE_RSP);
+	}
+	_Settings->SaveBool(Plugin_RSP_Changed,  false);
+	_Settings->SaveBool(Plugin_AUDIO_Changed,false);
+	_Settings->SaveBool(Plugin_GFX_Changed,  false);
+	_Settings->SaveBool(Plugin_CONT_Changed, false);
+	_Notify->RefreshMenu();
+	if (!_Plugins->Initiate()) 
+	{
+		_Notify->DisplayMessage(5,MSG_PLUGIN_NOT_INIT);
+		_BaseSystem->m_EndEmulation = true;
+	} else {
+		//CC_Core::SetCurrentSystem(_N64System);
+	}
+	_Recompiler->ResetRecompCode();
 }
