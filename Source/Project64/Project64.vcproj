@@ -37,7 +37,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				UsePrecompiledHeader="0"
 				WarningLevel="3"
 			/>
 			<Tool
@@ -211,6 +210,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\stdafx.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="ValidateBinary.cpp"
 				>
 			</File>
@@ -227,10 +238,6 @@
 				</File>
 				<File
 					RelativePath="Settings\Recompiler Settings.cpp"
-					>
-				</File>
-				<File
-					RelativePath="Settings\Setting Config.cpp"
 					>
 				</File>
 				<File
@@ -313,10 +320,6 @@
 			<Filter
 				Name="User Interface Source"
 				>
-				<File
-					RelativePath="User Interface\Cheats.cpp"
-					>
-				</File>
 				<File
 					RelativePath="User Interface\Frame Per Second Class.cpp"
 					>
@@ -509,15 +512,7 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\C Memory.cpp"
-						>
-					</File>
-					<File
 						RelativePath=".\N64 System\C Core\CPU Log.cpp"
-						>
-					</File>
-					<File
-						RelativePath="N64 System\C Core\CPU.cpp"
 						>
 					</File>
 					<File
@@ -526,10 +521,6 @@
 					</File>
 					<File
 						RelativePath="N64 System\C Core\Eeprom.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\N64 System\C Core\Exception.cpp"
 						>
 					</File>
 					<File
@@ -553,23 +544,7 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\r4300i Memory.cpp"
-						>
-					</File>
-					<File
 						RelativePath="N64 System\C Core\r4300i Registers.cpp"
-						>
-					</File>
-					<File
-						RelativePath="N64 System\C Core\Recompiler CPU.cpp"
-						>
-					</File>
-					<File
-						RelativePath="N64 System\C Core\Recompiler Fpu Ops.cpp"
-						>
-					</File>
-					<File
-						RelativePath="N64 System\C Core\Registers.cpp"
 						>
 					</File>
 					<File
@@ -577,27 +552,7 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\Sync CPU.c"
-						>
-					</File>
-					<File
-						RelativePath="N64 System\C Core\TLB Display.c"
-						>
-					</File>
-					<File
-						RelativePath="N64 System\C Core\Tlb.c"
-						>
-					</File>
-					<File
 						RelativePath=".\N64 System\C Core\Win32Timer.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\N64 System\C Core\x86 fpu.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\N64 System\C Core\X86.cpp"
 						>
 					</File>
 				</Filter>
@@ -638,10 +593,6 @@
 					</File>
 					<File
 						RelativePath="N64 System\Recompiler\Delay Slot Map Class.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\N64 System\Recompiler\Exit Info.cpp"
 						>
 					</File>
 					<File
@@ -732,10 +683,26 @@
 				<File
 					RelativePath="3rd Party\7zip.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="3rd Party\Processor Info.cpp"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<Filter
 					Name="ZLib Source"
@@ -743,10 +710,26 @@
 					<File
 						RelativePath="3rd Party\zlib\UNZIP.C"
 						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="3rd Party\zlib\zip.c"
 						>
+						<FileConfiguration
+							Name="Debug|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								UsePrecompiledHeader="0"
+							/>
+						</FileConfiguration>
 					</File>
 				</Filter>
 			</Filter>

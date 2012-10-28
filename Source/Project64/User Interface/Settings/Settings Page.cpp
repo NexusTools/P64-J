@@ -1,4 +1,4 @@
-#include "../../User Interface.h"
+#include "stdafx.h"
 #include "Settings Page.h"
 
 CConfigSettingSection::CConfigSettingSection( LPCSTR PageTitle ) :
@@ -8,10 +8,9 @@ CConfigSettingSection::CConfigSettingSection( LPCSTR PageTitle ) :
 
 CConfigSettingSection::~CConfigSettingSection ()
 {
-	for (size_t i = 0; i < m_Pages.size(); i++)
+	for (int i = 0; i < m_Pages.size(); i++)
 	{
-		CSettingsPage * Page = m_Pages[i];
-		delete Page;
+		delete m_Pages[i];
 	}
 	m_Pages.clear();
 }
@@ -23,7 +22,7 @@ void CConfigSettingSection::AddPage(CSettingsPage * Page )
 
 CSettingsPage * CConfigSettingSection::GetPage ( int PageNo )
 {
-	if (PageNo < 0 || PageNo >= (int)m_Pages.size())
+	if (PageNo < 0 || PageNo >= m_Pages.size())
 	{
 		return NULL;
 	}

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include <windows.h>
 #include <Wininet.h>
 #include <common\md5.h>

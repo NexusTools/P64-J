@@ -296,7 +296,7 @@ DWORD CSettings::FindGameSetting ( CSettings * _this, char * Name )
 		}
 
 		CSettingTypeGame * GameSetting = (CSettingTypeGame *)Setting;
-		if (stricmp(GameSetting->GetKeyName(),Name) != 0)
+		if (_stricmp(GameSetting->GetKeyName(),Name) != 0)
 		{
 			continue;
 		}
