@@ -501,7 +501,7 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\CPU Log.c"
+						RelativePath=".\N64 System\C Core\CPU Log.cpp"
 						>
 					</File>
 					<File
@@ -533,7 +533,7 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\Logging.c"
+						RelativePath=".\N64 System\C Core\Logging.cpp"
 						>
 					</File>
 					<File

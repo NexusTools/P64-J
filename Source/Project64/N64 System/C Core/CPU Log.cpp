@@ -27,13 +27,12 @@
 //#if (!defined(EXTERNAL_RELEASE))
 #include <windows.h>
 #include <stdio.h>
-#include <stdlib.h>
-//#include "main.h"
-//#include "debugger.h"
+#include "main.h"
+#include "debugger.h"
+
+#ifdef Log_x86Code
 
 static HANDLE hCPULogFile = NULL;
-
-void Stop_x86_Log (void);
 
 BOOL IsX86Logging ( void )
 {
@@ -55,12 +54,10 @@ void CPU_Message (char * Message, ...) {
 }
 
 void Start_x86_Log (void) {
-	char path_buffer[_MAX_PATH], drive[_MAX_DRIVE] ,dir[_MAX_DIR];
-	char fname[_MAX_FNAME],ext[_MAX_EXT], LogFileName[_MAX_PATH];
 
-	GetModuleFileName(NULL,path_buffer,sizeof(path_buffer));
-	_splitpath( path_buffer, drive, dir, fname, ext );
-   	_makepath( LogFileName, drive, dir, "CPUoutput", "log" );
+	CPath LogFileName(CPath::MODULE_DIRECTORY);
+	LogFileName.AppendDirectory("Logs");
+	LogFileName.SetNameExtension(_T("CPUoutput.log"));
 		
 	if (hCPULogFile) { Stop_x86_Log(); }
 	hCPULogFile = CreateFile(LogFileName,GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
@@ -74,5 +71,5 @@ void Stop_x86_Log (void) {
 		hCPULogFile = NULL;
 	}
 }
-
+#endif 
 //#endif
