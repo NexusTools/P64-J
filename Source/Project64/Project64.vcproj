@@ -464,6 +464,14 @@
 						>
 					</File>
 					<File
+						RelativePath=".\N64 System\Mips\Memory Virtual Mem.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Mips\Memory Virtual Mem.h"
+						>
+					</File>
+					<File
 						RelativePath="N64 System\Mips\Memory.cpp"
 						>
 					</File>

@@ -3,6 +3,7 @@
 
 #include <Windows.h>
 #include <MMSystem.h>
+#include <common/CriticalSection.h>
 #include "Multilanguage.h"
 #include "User Interface.h"
 #include "N64 System.h"
