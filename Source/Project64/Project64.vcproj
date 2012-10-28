@@ -477,6 +477,14 @@
 						>
 					</File>
 					<File
+						RelativePath=".\N64 System\Mips\System Events.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Mips\System Events.h"
+						>
+					</File>
+					<File
 						RelativePath="N64 System\Mips\System Timing.cpp"
 						>
 					</File>
@@ -581,7 +589,7 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\Win32Timer.c"
+						RelativePath=".\N64 System\C Core\Win32Timer.cpp"
 						>
 					</File>
 					<File
