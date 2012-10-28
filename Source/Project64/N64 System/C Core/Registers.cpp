@@ -23,6 +23,7 @@
  * should be forwarded to them so if they want them.
  *
  */
+#ifdef tofix
 #include <windows.h>
 #include <stdio.h>
 #include "c core.h"
@@ -78,13 +79,13 @@ DWORD RegModValue;
 int fpuControl;
 
 
-int  UnMap_8BitTempReg (CBlockSection * Section);
-int  UnMap_TempReg     (CBlockSection * Section);
-BOOL UnMap_X86reg      (CBlockSection * Section, DWORD x86Reg);
+int  UnMap_8BitTempReg (CCodeSection * Section);
+int  UnMap_TempReg     (CCodeSection * Section);
+BOOL UnMap_X86reg      (CCodeSection * Section, DWORD x86Reg);
 
 char *Format_Name[] = {"Unkown","dword","qword","float","double"};
 
-void ChangeFPURegFormat (CBlockSection * Section, int Reg, CRegInfo::FPU_STATE OldFormat, CRegInfo::FPU_STATE NewFormat, CRegInfo::FPU_ROUND RoundingModel) {
+void ChangeFPURegFormat (CCodeSection * Section, int Reg, CRegInfo::FPU_STATE OldFormat, CRegInfo::FPU_STATE NewFormat, CRegInfo::FPU_ROUND RoundingModel) {
 	DWORD i;
 
 	for (i = 0; i < 8; i++) {
@@ -179,7 +180,7 @@ void ChangeSpStatus (void) {
 	//}
 }
 
-int Free8BitX86Reg (CBlockSection * Section) {
+int Free8BitX86Reg (CCodeSection * Section) {
 	int x86Reg, count, MapCount[10], MapReg[10];
 	
 	if (Section->x86Mapped(x86_EBX) == CRegInfo::NotMapped && !Section->x86Protected(x86_EBX)) {return x86_EBX; }
@@ -223,7 +224,7 @@ int Free8BitX86Reg (CBlockSection * Section) {
 	return -1;
 }
 
-int FreeX86Reg (CBlockSection * Section) {
+int FreeX86Reg (CCodeSection * Section) {
 	int x86Reg, count, MapCount[10], MapReg[10], StackReg;
 
 	if (Section->x86Mapped(x86_EDI) == CRegInfo::NotMapped && !Section->x86Protected(x86_EDI)) {return x86_EDI; }
@@ -503,7 +504,7 @@ BOOL Is8BitReg (int x86Reg) {
 	return FALSE;
 }
 
-void Load_FPR_ToTop (CBlockSection * Section, int Reg, int RegToLoad, CRegInfo::FPU_STATE Format) {
+void Load_FPR_ToTop (CCodeSection * Section, int Reg, int RegToLoad, CRegInfo::FPU_STATE Format) {
 	int i;
 
 	if (RegToLoad < 0) { DisplayError("Load_FPR_ToTop\nRegToLoad < 0 ???"); return; }
@@ -637,7 +638,7 @@ void Load_FPR_ToTop (CBlockSection * Section, int Reg, int RegToLoad, CRegInfo::
 		Section->CurrentRoundingModel(),Section->FpuRoundingModel(Section->StackTopPos()));
 }
 
-void Map_GPR_32bit (CBlockSection * Section, int Reg, BOOL SignValue, int MipsRegToLoad) {
+void Map_GPR_32bit (CCodeSection * Section, int Reg, BOOL SignValue, int MipsRegToLoad) {
 	int x86Reg,count;
 
 	if (Reg == 0) {
@@ -697,7 +698,7 @@ void Map_GPR_32bit (CBlockSection * Section, int Reg, BOOL SignValue, int MipsRe
 	Section->MipsRegState(Reg) = SignValue ? CRegInfo::STATE_MAPPED_32_SIGN : CRegInfo::STATE_MAPPED_32_ZERO;
 }
 
-void Map_GPR_64bit (CBlockSection * Section, int Reg, int MipsRegToLoad) {
+void Map_GPR_64bit (CCodeSection * Section, int Reg, int MipsRegToLoad) {
 	int x86Hi, x86lo, count;
 
 	if (Reg == 0) {
@@ -794,7 +795,7 @@ CPU_Message("Map_GPR_64bit 11");
 	Section->MipsRegState(Reg) = CRegInfo::STATE_MAPPED_64;
 }
 
-int Map_MemoryStack (CBlockSection * Section, int Reg, bool MapRegister)
+int Map_MemoryStack (CCodeSection * Section, int Reg, bool MapRegister)
 {
 	int CurrentMap = -1;
 
@@ -854,7 +855,7 @@ int Map_MemoryStack (CBlockSection * Section, int Reg, bool MapRegister)
 	return Reg;
 }
 
-int Map_TempReg (CBlockSection * Section, int x86Reg, int MipsReg, BOOL LoadHiWord) {
+int Map_TempReg (CCodeSection * Section, int x86Reg, int MipsReg, BOOL LoadHiWord) {
 	int count;
 
 	if (x86Reg == x86_Any) {		
@@ -998,7 +999,7 @@ int Map_TempReg (CBlockSection * Section, int x86Reg, int MipsReg, BOOL LoadHiWo
 	return x86Reg;
 }
 
-void ProtectGPR(CBlockSection * Section, DWORD Reg) {
+void ProtectGPR(CCodeSection * Section, DWORD Reg) {
 	if (Section->IsUnknown(Reg)) { return; }
 	if (Section->IsConst(Reg)) { return; }
 	if (Section->Is64Bit(Reg)) {
@@ -1007,7 +1008,7 @@ void ProtectGPR(CBlockSection * Section, DWORD Reg) {
 	Section->x86Protected(Section->MipsRegLo(Reg)) = TRUE;
 }
 
-BOOL RegInStack(CBlockSection * Section,int Reg, int Format) {
+BOOL RegInStack(CCodeSection * Section,int Reg, int Format) {
 	int i;
 
 	for (i = 0; i < 8; i++) {
@@ -1062,7 +1063,7 @@ void SetupRegisters(N64_REGISTERS * n64_Registers) {
 }
 #endif
 
-int StackPosition (CBlockSection * Section,int Reg) {
+int StackPosition (CCodeSection * Section,int Reg) {
 	int i;
 
 	for (i = 0; i < 8; i++) {
@@ -1073,7 +1074,7 @@ int StackPosition (CBlockSection * Section,int Reg) {
 	return -1;
 }
 
-int UnMap_8BitTempReg (CBlockSection * Section) {
+int UnMap_8BitTempReg (CCodeSection * Section) {
 	int count;
 
 	for (count = 0; count < 10; count ++) {
@@ -1089,7 +1090,7 @@ int UnMap_8BitTempReg (CBlockSection * Section) {
 	return -1;
 }
 
-void UnMap_AllFPRs ( CBlockSection * Section ) {
+void UnMap_AllFPRs ( CCodeSection * Section ) {
 	DWORD StackPos;
 
 	for (;;) {
@@ -1109,7 +1110,7 @@ void UnMap_AllFPRs ( CBlockSection * Section ) {
 	}
 }
 
-void FixRoundModel(CBlockSection * Section, CRegInfo::FPU_ROUND RoundMethod )
+void FixRoundModel(CCodeSection * Section, CRegInfo::FPU_ROUND RoundMethod )
 {
 	if (Section->CurrentRoundingModel() == RoundMethod) 
 	{
@@ -1136,7 +1137,7 @@ void FixRoundModel(CBlockSection * Section, CRegInfo::FPU_ROUND RoundMethod )
 	Section->CurrentRoundingModel() = RoundMethod;
 }
 
-void UnMap_FPR (CBlockSection * Section, int Reg, int WriteBackValue ) {
+void UnMap_FPR (CCodeSection * Section, int Reg, int WriteBackValue ) {
 	char Name[50];
 	int TempReg;
 	int i;
@@ -1208,7 +1209,7 @@ void UnMap_FPR (CBlockSection * Section, int Reg, int WriteBackValue ) {
 	}
 }
 
-void UnMap_GPR (CBlockSection * Section, DWORD Reg, int WriteBackValue) {
+void UnMap_GPR (CCodeSection * Section, DWORD Reg, int WriteBackValue) {
 	if (Reg == 0) {
 #ifndef EXTERNAL_RELEASE
 		DisplayError("UnMap_GPR\n\nWhy are you trying to unmap reg 0");
@@ -1264,7 +1265,7 @@ void UnMap_GPR (CBlockSection * Section, DWORD Reg, int WriteBackValue) {
 	Section->MipsRegState(Reg) = CRegInfo::STATE_UNKNOWN;
 }
 
-int UnMap_TempReg (CBlockSection * Section) {
+int UnMap_TempReg (CCodeSection * Section) {
 	int count;
 
 	for (count = 0; count < 10; count ++) {
@@ -1279,7 +1280,7 @@ int UnMap_TempReg (CBlockSection * Section) {
 	return -1;
 }
 
-BOOL UnMap_X86reg (CBlockSection * Section, DWORD x86Reg) {
+BOOL UnMap_X86reg (CCodeSection * Section, DWORD x86Reg) {
 	int count;
 
 	if (Section->x86Mapped(x86Reg) == CRegInfo::NotMapped && Section->x86Protected(x86Reg) == FALSE) { return TRUE; }
@@ -1323,7 +1324,7 @@ BOOL UnMap_X86reg (CBlockSection * Section, DWORD x86Reg) {
 	return FALSE;
 }
 
-void UnProtectGPR(CBlockSection * Section, DWORD Reg) {
+void UnProtectGPR(CCodeSection * Section, DWORD Reg) {
 	if (Section->IsUnknown(Reg)) { return; }
 	if (Section->IsConst(Reg)) { return; }
 	if (Section->Is64Bit(Reg)) {
@@ -1332,7 +1333,7 @@ void UnProtectGPR(CBlockSection * Section, DWORD Reg) {
 	Section->x86Protected(Section->MipsRegLo(Reg)) = FALSE;
 }
 
-/*void WriteBackRegisters (CBlockSection * Section) {
+/*void WriteBackRegisters (CCodeSection * Section) {
 	int count;
 
 	for (count = 1; count < 10; count ++) { Section->x86Protected(count) = FALSE; }
@@ -1355,80 +1356,6 @@ void UnProtectGPR(CBlockSection * Section, DWORD Reg) {
 	}
 	UnMap_AllFPRs(Section);
 }*/
-void WriteBackRegisters (CBlockSection * Section) {
-	int count;
-	BOOL bEdiZero = FALSE;
-	BOOL bEsiSign = FALSE;
-	/*** coming soon ***/
-	BOOL bEaxGprLo = FALSE;
-	BOOL bEbxGprHi = FALSE;
 
-	for (count = 1; count < 10; count ++) { Section->x86Protected(count) = FALSE; }
-	for (count = 1; count < 10; count ++) { UnMap_X86reg (Section, count); }
 
-	/*************************************/
-	
-	for (count = 1; count < 32; count ++) {
-		switch (Section->MipsRegState(count)) {
-		case CRegInfo::STATE_UNKNOWN: break;
-		case CRegInfo::STATE_CONST_32:
-			if (!bEdiZero && (!Section->MipsRegLo(count) || !(Section->MipsRegLo(count) & 0x80000000))) {
-				XorX86RegToX86Reg(x86_EDI, x86_EDI);
-				bEdiZero = TRUE;
-			}
-			if (!bEsiSign && (Section->MipsRegLo(count) & 0x80000000)) {
-				MoveConstToX86reg(0xFFFFFFFF, x86_ESI);
-				bEsiSign = TRUE;
-			}
-
-			if ((Section->MipsRegLo(count) & 0x80000000) != 0) {
-				MoveX86regToVariable(x86_ESI,&_GPR[count].UW[1],GPR_NameHi[count]);
-			} else {
-				MoveX86regToVariable(x86_EDI,&_GPR[count].UW[1],GPR_NameHi[count]);
-			}
-
-			if (Section->MipsRegLo(count) == 0) {
-				MoveX86regToVariable(x86_EDI,&_GPR[count].UW[0],GPR_NameLo[count]);
-			} else if (Section->MipsRegLo(count) == 0xFFFFFFFF) {
-				MoveX86regToVariable(x86_ESI,&_GPR[count].UW[0],GPR_NameLo[count]);
-			} else
-				MoveConstToVariable(Section->MipsRegLo(count),&_GPR[count].UW[0],GPR_NameLo[count]);
-
-			Section->MipsRegState(count) = CRegInfo::STATE_UNKNOWN;
-			break;
-		case CRegInfo::STATE_CONST_64:
-			if (Section->MipsRegLo(count) == 0 || Section->MipsRegHi(count) == 0) {
-				XorX86RegToX86Reg(x86_EDI, x86_EDI);
-				bEdiZero = TRUE;
-			}
-			if (Section->MipsRegLo(count) == 0xFFFFFFFF || Section->MipsRegHi(count) == 0xFFFFFFFF) {
-				MoveConstToX86reg(0xFFFFFFFF, x86_ESI);
-				bEsiSign = TRUE;
-			}
-
-			if (Section->MipsRegHi(count) == 0) {
-				MoveX86regToVariable(x86_EDI,&_GPR[count].UW[1],GPR_NameHi[count]);
-			} else if (Section->MipsRegLo(count) == 0xFFFFFFFF) {
-				MoveX86regToVariable(x86_ESI,&_GPR[count].UW[1],GPR_NameHi[count]);
-			} else {
-				MoveConstToVariable(Section->MipsRegHi(count),&_GPR[count].UW[1],GPR_NameHi[count]);
-			} 
-
-			if (Section->MipsRegLo(count) == 0) {
-				MoveX86regToVariable(x86_EDI,&_GPR[count].UW[0],GPR_NameLo[count]);
-			} else if (Section->MipsRegLo(count) == 0xFFFFFFFF) {
-				MoveX86regToVariable(x86_ESI,&_GPR[count].UW[0],GPR_NameLo[count]);
-			} else {
-				MoveConstToVariable(Section->MipsRegLo(count),&_GPR[count].UW[0],GPR_NameLo[count]);
-			}
-			Section->MipsRegState(count) = CRegInfo::STATE_UNKNOWN;
-			break;
-#ifndef EXTERNAL_RELEASE
-		default:
-			DisplayError("Unknown State: %d\nin WriteBackRegisters",Section->MipsRegState(count));
 #endif
-		}
-	}
-	UnMap_AllFPRs(Section);
-}
-

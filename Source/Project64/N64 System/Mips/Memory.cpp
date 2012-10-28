@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 void ** JumpTable, ** DelaySlotTable;
-BYTE *RecompCode, *RecompPos;
+BYTE *RecompPos;
 
 CMipsMemoryVM::CMipsMemoryVM ( CMipsMemory_CallBack * CallBack ) :
 	m_CBClass(CallBack),
@@ -445,12 +445,17 @@ BOOL CMipsMemoryVM::SD_VAddr ( DWORD VAddr, QWORD Value )
 
 bool CMipsMemoryVM::ValidVaddr ( DWORD VAddr ) const
 {
-	_Notify->BreakPoint(__FILE__,__LINE__);
-#ifdef tofix
-	return CTLB::ValidVaddr(VAddr);
-#endif
-	return false;
+	return m_TLB_ReadMap[VAddr >> 12] != 0;
 }
+
+bool CMipsMemoryVM::TranslateVaddr ( DWORD VAddr, DWORD &PAddr) const 
+{
+	//Change the Virtual address to a Phyiscal Address
+	if (m_TLB_ReadMap[VAddr >> 12] == 0) { return false; }
+	PAddr = (DWORD)((BYTE *)(m_TLB_ReadMap[VAddr >> 12] + VAddr) - m_RDRAM);
+	return true;
+}
+
 
 #ifdef toremove
 bool CMipsMemoryVM::Store64 ( DWORD VAddr, QWORD Value, MemorySize Size ) {
@@ -617,7 +622,7 @@ void CMipsMemoryVM::MemoryFilterFailed( char * FailureType, DWORD MipsAddress,  
 }
 #endif
 
-void  CMipsMemoryVM::Compile_LB ( int Reg, DWORD VAddr, BOOL SignExtend) {
+void  CMipsMemoryVM::Compile_LB ( CX86Ops::x86Reg Reg, DWORD VAddr, BOOL SignExtend) {
 	_Notify->BreakPoint(__FILE__,__LINE__);
 #ifdef tofix
 	DWORD PAddr;
@@ -654,7 +659,7 @@ void  CMipsMemoryVM::Compile_LB ( int Reg, DWORD VAddr, BOOL SignExtend) {
 #endif
 }
 
-void  CMipsMemoryVM::Compile_LH ( int Reg, DWORD VAddr, BOOL SignExtend) {
+void  CMipsMemoryVM::Compile_LH ( CX86Ops::x86Reg Reg, DWORD VAddr, BOOL SignExtend) {
 	_Notify->BreakPoint(__FILE__,__LINE__);
 #ifdef tofix
 	char VarName[100];
@@ -691,9 +696,7 @@ void  CMipsMemoryVM::Compile_LH ( int Reg, DWORD VAddr, BOOL SignExtend) {
 #endif
 }
 
-void  CMipsMemoryVM::Compile_LW ( CBlockSection * Section, int Reg, DWORD VAddr ) {
-	_Notify->BreakPoint(__FILE__,__LINE__);
-#ifdef tofix
+void  CMipsMemoryVM::Compile_LW (CCodeSection * Section, CX86Ops::x86Reg Reg, DWORD VAddr ) {
 	char VarName[100];
 	DWORD PAddr;
 
@@ -723,10 +726,10 @@ void  CMipsMemoryVM::Compile_LW ( CBlockSection * Section, int Reg, DWORD VAddr 
 			break; 
 		}
 		switch (PAddr) {
-		case 0x04040010: MoveVariableToX86reg(&SP_STATUS_REG,"SP_STATUS_REG",Reg); break;
-		case 0x04040014: MoveVariableToX86reg(&SP_DMA_FULL_REG,"SP_DMA_FULL_REG",Reg); break;
-		case 0x04040018: MoveVariableToX86reg(&SP_DMA_BUSY_REG,"SP_DMA_BUSY_REG",Reg); break;
-		case 0x04080000: MoveVariableToX86reg(&SP_PC_REG,"SP_PC_REG",Reg); break;
+		case 0x04040010: MoveVariableToX86reg(&_Reg->SP_STATUS_REG,"SP_STATUS_REG",Reg); break;
+		case 0x04040014: MoveVariableToX86reg(&_Reg->SP_DMA_FULL_REG,"SP_DMA_FULL_REG",Reg); break;
+		case 0x04040018: MoveVariableToX86reg(&_Reg->SP_DMA_BUSY_REG,"SP_DMA_BUSY_REG",Reg); break;
+		case 0x04080000: MoveVariableToX86reg(&_Reg->SP_PC_REG,"SP_PC_REG",Reg); break;
 		default:
 			MoveConstToX86reg(0,Reg);
 			if (_Settings->LoadBool(Debugger_ShowUnhandledMemory)) { DisplayError("Compile_LW\nFailed to translate address: %X",VAddr); }
@@ -739,10 +742,10 @@ void  CMipsMemoryVM::Compile_LW ( CBlockSection * Section, int Reg, DWORD VAddr 
 		break;
 	case 0x04300000:
 		switch (PAddr) {
-		case 0x04300000: MoveVariableToX86reg(&MI_MODE_REG,"MI_MODE_REG",Reg); break;
-		case 0x04300004: MoveVariableToX86reg(&MI_VERSION_REG,"MI_VERSION_REG",Reg); break;
-		case 0x04300008: MoveVariableToX86reg(&MI_INTR_REG,"MI_INTR_REG",Reg); break;
-		case 0x0430000C: MoveVariableToX86reg(&MI_INTR_MASK_REG,"MI_INTR_MASK_REG",Reg); break;
+		case 0x04300000: MoveVariableToX86reg(&_Reg->MI_MODE_REG,"MI_MODE_REG",Reg); break;
+		case 0x04300004: MoveVariableToX86reg(&_Reg->MI_VERSION_REG,"MI_VERSION_REG",Reg); break;
+		case 0x04300008: MoveVariableToX86reg(&_Reg->MI_INTR_REG,"MI_INTR_REG",Reg); break;
+		case 0x0430000C: MoveVariableToX86reg(&_Reg->MI_INTR_MASK_REG,"MI_INTR_MASK_REG",Reg); break;
 		default:
 			MoveConstToX86reg(0,Reg);
 			if (_Settings->LoadBool(Debugger_ShowUnhandledMemory)) { DisplayError("Compile_LW\nFailed to translate address: %X",VAddr); }
@@ -751,14 +754,17 @@ void  CMipsMemoryVM::Compile_LW ( CBlockSection * Section, int Reg, DWORD VAddr 
 	case 0x04400000: 
 		switch (PAddr) {
 		case 0x04400010:
-			_N64System->GetRecompiler()->UpdateCounters(&Section->BlockCycleCount(),&Section->BlockRandomModifier(),FALSE);
-			Section->BlockCycleCount() = 0;
-			Section->BlockRandomModifier() = 0;
+			_Notify->BreakPoint(__FILE__,__LINE__);
+#ifdef tofix			
+			Section->UpdateCounters(&RegInfo.BlockCycleCount(),&RegInfo.BlockRandomModifier(),FALSE);
+			RegInfo.BlockCycleCount() = 0;
+			RegInfo.BlockRandomModifier() = 0;
 			Pushad();
 			MoveConstToX86reg((DWORD)this,x86_ECX);
 			Call_Direct(AddressOf(CMipsMemoryVM::UpdateHalfLine),"CMipsMemoryVM::UpdateHalfLine");
 			Popad();
-			MoveVariableToX86reg(m_HalfLine,"m_HalfLine",Reg);
+			MoveVariableToX86reg(&m_HalfLine,"m_HalfLine",Reg);
+#endif
 			break;
 		default:
 			MoveConstToX86reg(0,Reg);
@@ -770,13 +776,16 @@ void  CMipsMemoryVM::Compile_LW ( CBlockSection * Section, int Reg, DWORD VAddr 
 		case 0x04500004: 
 			if (_Settings->LoadBool(Game_FixedAudio))
 			{
-				_N64System->GetRecompiler()->UpdateCounters(&Section->BlockCycleCount(),&Section->BlockRandomModifier(),FALSE);			
+				_Notify->BreakPoint(__FILE__,__LINE__);
+#ifdef tofix			
+				CRecompilerOps::UpdateCounters(&RegInfo.BlockCycleCount(),&RegInfo.BlockRandomModifier(),FALSE);
 				Pushad();
 				MoveConstToX86reg((DWORD)_Audio,x86_ECX);				
-				Call_Direct(CAudio::AiGetLength,"AiGetLength");
+				Call_Direct(AddressOf(CAudio::AiGetLength),"AiGetLength");
 				MoveX86regToVariable(x86_EAX,&m_TempValue,"m_TempValue"); 
 				Popad();
 				MoveVariableToX86reg(&m_TempValue,"m_TempValue",Reg);
+#endif
 			} else {
 				if (AiReadLength != NULL) {
 					Pushad();
@@ -794,12 +803,12 @@ void  CMipsMemoryVM::Compile_LW ( CBlockSection * Section, int Reg, DWORD VAddr 
 			{
 				Pushad();
 				MoveConstToX86reg((DWORD)_Audio,x86_ECX);
-				Call_Direct(CAudio::AiGetStatus,"AiGetStatus");
+				Call_Direct(AddressOf(&CAudio::AiGetStatus),"AiGetStatus");
 				MoveX86regToVariable(x86_EAX,&m_TempValue,"m_TempValue"); 
 				Popad();
 				MoveVariableToX86reg(&m_TempValue,"m_TempValue",Reg);
 			} else {
-				MoveVariableToX86reg(&AI_STATUS_REG,"AI_STATUS_REG",Reg); 
+				MoveVariableToX86reg(&_Reg->AI_STATUS_REG,"AI_STATUS_REG",Reg); 
 			}
 			break;
 		default:
@@ -809,15 +818,15 @@ void  CMipsMemoryVM::Compile_LW ( CBlockSection * Section, int Reg, DWORD VAddr 
 		break;
 	case 0x04600000:
 		switch (PAddr) {
-		case 0x04600010: MoveVariableToX86reg(&PI_STATUS_REG,"PI_STATUS_REG",Reg); break;
-		case 0x04600014: MoveVariableToX86reg(&PI_DOMAIN1_REG,"PI_DOMAIN1_REG",Reg); break;
-		case 0x04600018: MoveVariableToX86reg(&PI_BSD_DOM1_PWD_REG,"PI_BSD_DOM1_PWD_REG",Reg); break;
-		case 0x0460001C: MoveVariableToX86reg(&PI_BSD_DOM1_PGS_REG,"PI_BSD_DOM1_PGS_REG",Reg); break;
-		case 0x04600020: MoveVariableToX86reg(&PI_BSD_DOM1_RLS_REG,"PI_BSD_DOM1_RLS_REG",Reg); break;
-		case 0x04600024: MoveVariableToX86reg(&PI_DOMAIN2_REG,"PI_DOMAIN2_REG",Reg); break;
-		case 0x04600028: MoveVariableToX86reg(&PI_BSD_DOM2_PWD_REG,"PI_BSD_DOM2_PWD_REG",Reg); break;
-		case 0x0460002C: MoveVariableToX86reg(&PI_BSD_DOM2_PGS_REG,"PI_BSD_DOM2_PGS_REG",Reg); break;
-		case 0x04600030: MoveVariableToX86reg(&PI_BSD_DOM2_RLS_REG,"PI_BSD_DOM2_RLS_REG",Reg); break;
+		case 0x04600010: MoveVariableToX86reg(&_Reg->PI_STATUS_REG,"PI_STATUS_REG",Reg); break;
+		case 0x04600014: MoveVariableToX86reg(&_Reg->PI_DOMAIN1_REG,"PI_DOMAIN1_REG",Reg); break;
+		case 0x04600018: MoveVariableToX86reg(&_Reg->PI_BSD_DOM1_PWD_REG,"PI_BSD_DOM1_PWD_REG",Reg); break;
+		case 0x0460001C: MoveVariableToX86reg(&_Reg->PI_BSD_DOM1_PGS_REG,"PI_BSD_DOM1_PGS_REG",Reg); break;
+		case 0x04600020: MoveVariableToX86reg(&_Reg->PI_BSD_DOM1_RLS_REG,"PI_BSD_DOM1_RLS_REG",Reg); break;
+		case 0x04600024: MoveVariableToX86reg(&_Reg->PI_DOMAIN2_REG,"PI_DOMAIN2_REG",Reg); break;
+		case 0x04600028: MoveVariableToX86reg(&_Reg->PI_BSD_DOM2_PWD_REG,"PI_BSD_DOM2_PWD_REG",Reg); break;
+		case 0x0460002C: MoveVariableToX86reg(&_Reg->PI_BSD_DOM2_PGS_REG,"PI_BSD_DOM2_PGS_REG",Reg); break;
+		case 0x04600030: MoveVariableToX86reg(&_Reg->PI_BSD_DOM2_RLS_REG,"PI_BSD_DOM2_RLS_REG",Reg); break;
 		default:
 			MoveConstToX86reg(0,Reg);
 			if (_Settings->LoadBool(Debugger_ShowUnhandledMemory)) { DisplayError("Compile_LW\nFailed to translate address: %X",VAddr); }
@@ -825,8 +834,8 @@ void  CMipsMemoryVM::Compile_LW ( CBlockSection * Section, int Reg, DWORD VAddr 
 		break;
 	case 0x04700000:
 		switch (PAddr) {
-		case 0x0470000C: MoveVariableToX86reg(&RI_SELECT_REG,"RI_SELECT_REG",Reg); break;
-		case 0x04700010: MoveVariableToX86reg(&RI_REFRESH_REG,"RI_REFRESH_REG",Reg); break;
+		case 0x0470000C: MoveVariableToX86reg(&_Reg->RI_SELECT_REG,"RI_SELECT_REG",Reg); break;
+		case 0x04700010: MoveVariableToX86reg(&_Reg->RI_REFRESH_REG,"RI_REFRESH_REG",Reg); break;
 		default:
 			MoveConstToX86reg(0,Reg);
 			if (_Settings->LoadBool(Debugger_ShowUnhandledMemory)) { DisplayError("Compile_LW\nFailed to translate address: %X",VAddr); }
@@ -834,7 +843,7 @@ void  CMipsMemoryVM::Compile_LW ( CBlockSection * Section, int Reg, DWORD VAddr 
 		break;
 	case 0x04800000:
 		switch (PAddr) {
-		case 0x04800018: MoveVariableToX86reg(&SI_STATUS_REG,"SI_STATUS_REG",Reg); break;
+		case 0x04800018: MoveVariableToX86reg(&_Reg->SI_STATUS_REG,"SI_STATUS_REG",Reg); break;
 		default:
 			MoveConstToX86reg(0,Reg);
 			if (_Settings->LoadBool(Debugger_ShowUnhandledMemory)) { DisplayError("Compile_LW\nFailed to translate address: %X",VAddr); }
@@ -851,7 +860,6 @@ void  CMipsMemoryVM::Compile_LW ( CBlockSection * Section, int Reg, DWORD VAddr 
 			DisplayError("Compile_LW\nFailed to translate address: %X",VAddr); 
 		}
 	}
-#endif
 }
 
 void  CMipsMemoryVM::Compile_SB_Const ( BYTE Value, DWORD VAddr ) {
@@ -884,7 +892,7 @@ void  CMipsMemoryVM::Compile_SB_Const ( BYTE Value, DWORD VAddr ) {
 #endif
 }
 
-void  CMipsMemoryVM::Compile_SB_Register ( int x86Reg, DWORD VAddr ) {
+void  CMipsMemoryVM::Compile_SB_Register ( CX86Ops::x86Reg Reg, DWORD VAddr ) {
 	_Notify->BreakPoint(__FILE__,__LINE__);
 #ifdef tofix
 	char VarName[100];
@@ -944,7 +952,7 @@ void  CMipsMemoryVM::Compile_SH_Const ( WORD Value, DWORD VAddr ) {
 #endif
 }
 
-void CMipsMemoryVM::Compile_SH_Register ( int x86Reg, DWORD VAddr ) {
+void CMipsMemoryVM::Compile_SH_Register ( CX86Ops::x86Reg Reg, DWORD VAddr ) {
 	_Notify->BreakPoint(__FILE__,__LINE__);
 #ifdef tofix
 	char VarName[100];
@@ -1316,7 +1324,7 @@ void CMipsMemoryVM::Compile_SW_Const ( DWORD Value, DWORD VAddr ) {
 #endif
 }
 
-void CMipsMemoryVM::Compile_SW_Register ( CBlockSection * Section, int x86Reg, DWORD VAddr ) 
+void CMipsMemoryVM::Compile_SW_Register (CRegInfo & RegInfo, CX86Ops::x86Reg Reg, DWORD VAddr ) 
 {
 	_Notify->BreakPoint(__FILE__,__LINE__);
 #ifdef tofix
@@ -1586,7 +1594,7 @@ void CMipsMemoryVM::Compile_SW_Register ( CBlockSection * Section, int x86Reg, D
 #endif
 }
 
-void CMipsMemoryVM::ResetMemoryStack (CBlockSection * Section) 
+void CMipsMemoryVM::ResetMemoryStack (CRegInfo & RegInfo) 
 {
 	_Notify->BreakPoint(__FILE__,__LINE__);
 #ifdef tofix

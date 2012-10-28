@@ -26,7 +26,7 @@
 #ifndef __main_h 
 #define __main_h 
 
-//#include <common/memtest.h>
+#include <common/memtest.h>
 #include "..\N64 Types.h"
 #include "..\\Types.h"
 #include "plugin.h"

@@ -529,18 +529,6 @@
 						>
 					</File>
 					<File
-						RelativePath=".\N64 System\C Core\Interpreter CPU.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\N64 System\C Core\Interpreter Ops 32.cpp"
-						>
-					</File>
-					<File
-						RelativePath=".\N64 System\C Core\Interpreter Ops.cpp"
-						>
-					</File>
-					<File
 						RelativePath=".\N64 System\C Core\Logging.cpp"
 						>
 					</File>
@@ -570,10 +558,6 @@
 					</File>
 					<File
 						RelativePath="N64 System\C Core\Recompiler Fpu Ops.cpp"
-						>
-					</File>
-					<File
-						RelativePath="N64 System\C Core\Recompiler Ops.cpp"
 						>
 					</File>
 					<File
@@ -637,7 +621,19 @@
 					Name="Recompiler Files"
 					>
 					<File
+						RelativePath=".\N64 System\Recompiler\Code Block.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Recompiler\Code Section.cpp"
+						>
+					</File>
+					<File
 						RelativePath="N64 System\Recompiler\Delay Slot Map Class.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Recompiler\Exit Info.cpp"
 						>
 					</File>
 					<File
@@ -649,11 +645,47 @@
 						>
 					</File>
 					<File
+						RelativePath=".\N64 System\Recompiler\Jump Info.cpp"
+						>
+					</File>
+					<File
 						RelativePath="N64 System\Recompiler\Recompiler Class.cpp"
 						>
 					</File>
 					<File
+						RelativePath=".\N64 System\Recompiler\Recompiler Memory.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Recompiler\Recompiler Ops.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Recompiler\Reg Info.cpp"
+						>
+					</File>
+					<File
 						RelativePath="N64 System\Recompiler\Section Info.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Recompiler\X86ops.cpp"
+						>
+					</File>
+				</Filter>
+				<Filter
+					Name="Interpreter Source"
+					>
+					<File
+						RelativePath=".\N64 System\Interpreter\Interpreter CPU.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Interpreter\Interpreter Ops 32.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\Interpreter\Interpreter Ops.cpp"
 						>
 					</File>
 				</Filter>

@@ -1,15 +1,59 @@
-#include "..\..\N64 System.h"
-#pragma warning(disable:4355) // Disable 'this' : used in base member initializer list
+#include "stdafx.h"
 
-CBlockInfo::CBlockInfo(DWORD VAddr, BYTE * RecompPos) :
-	StartVAddr(VAddr), 
-	EndVAddr(VAddr),
-	CompiledLocation(RecompPos),
-	NoOfSections(1),
-	ParentSection(this, VAddr,1)
+CCodeBlock::CCodeBlock(DWORD VAddrEnter, BYTE * RecompPos) :
+	m_VAddrEnter(VAddrEnter), 
+	m_VAddrFirst(VAddrEnter),
+	m_VAddrLast(VAddrEnter),
+	m_CompiledLocation(RecompPos),
+	m_NoOfSections(1),
+	m_EnterSection(this, VAddrEnter, 1)
 {
-	ParentSection.AddParent(NULL);
-	ParentSection.LinkAllowed = false;
+	AnalyseBlock();
+}
+
+void CCodeBlock::AnalyseBlock ( void ) 
+{
+	/*if (bLinkBlocks())
+	{ 	
+		CCodeSection * Section = &ParentSection;
+		if (!CreateSectionLinkage (Section)) { return false; }
+		DetermineLoop(Section,CCodeSection::GetNewTestValue(),CCodeSection::GetNewTestValue(), Section->SectionID);
+		while (FixConstants(Section,CCodeSection::GetNewTestValue())) {}
+	}
+	return true;*/
+}
+
+bool CCodeBlock::Compile()
+{
+	CPU_Message("====== Code Block ======");
+	CPU_Message("x86 code at: %X",CompiledLocation());
+	CPU_Message("Start of Block: %X",VAddrEnter() );
+	CPU_Message("No of Sections: %d",NoOfSections() );
+	CPU_Message("====== recompiled code ======");
+#ifdef tofix
+	if (bLinkBlocks()) {
+		for (int count = 0; count < BlockInfo.NoOfSections; count ++) {
+			DisplaySectionInformation(&BlockInfo.ParentSection,count + 1,CBlockSection::GetNewTestValue());
+		}
+	}
+	if (m_SyncSystem) {
+		//if ((DWORD)BlockInfo.CompiledLocation == 0x60A7B73B) { X86BreakPoint(__FILE__,__LINE__); }
+		//MoveConstToVariable((DWORD)BlockInfo.CompiledLocation,&CurrentBlock,"CurrentBlock");
+	}
+#endif
+	
+#ifdef tofix
+	if (bLinkBlocks()) {
+		while (GenerateX86Code(BlockInfo,&BlockInfo.ParentSection,CBlockSection::GetNewTestValue()));
+	} else {
+#endif
+		m_EnterSection.GenerateX86Code(m_EnterSection.m_Test + 1);
+#ifdef tofix
+	}
+	CompileExitCode(BlockInfo);
+#endif
+
+	return false;
 }
 
 CJumpInfo::CJumpInfo()
@@ -23,25 +67,9 @@ CJumpInfo::CJumpInfo()
 	DoneDelaySlot = false;
 }
 
-CBlockSection::CBlockSection( CBlockInfo * _BlockInfo, DWORD StartAddr, DWORD ID) :
-	BlockInfo(_BlockInfo)
-{
-	JumpSection        = NULL;
-	ContinueSection    = NULL;
-	CompiledLocation   = NULL;
+#ifdef tofix
 
-	SectionID          = ID;
-	Test               = 0;
-	Test2              = 0;
-	InLoop             = false;
-	LinkAllowed        = true;
-	DelaySlotSection   = false;
-
-	StartPC            = StartAddr;
-	CompilePC          = StartAddr;
-}
-
-bool CBlockSection::IsAllParentLoops(CBlockSection * Parent, bool IgnoreIfCompiled, DWORD Test) 
+bool CCodeSection::IsAllParentLoops(CCodeSection * Parent, bool IgnoreIfCompiled, DWORD Test) 
 { 
 	if (IgnoreIfCompiled && Parent->CompiledLocation != NULL) { return true; }
 	if (!InLoop) { return false; }
@@ -53,13 +81,13 @@ bool CBlockSection::IsAllParentLoops(CBlockSection * Parent, bool IgnoreIfCompil
 		
 	for (SECTION_LIST::iterator iter = Parent->ParentSection.begin(); iter != Parent->ParentSection.end(); iter++)
 	{
-		CBlockSection * ParentSection = *iter;
+		CCodeSection * ParentSection = *iter;
 		if (!IsAllParentLoops(ParentSection,IgnoreIfCompiled,Test)) { return false; }
 	}
 	return true;
 }
 
-void CBlockSection::UnlinkParent( CBlockSection * Parent, bool AllowDelete, bool ContinueSection )
+void CCodeSection::UnlinkParent( CCodeSection * Parent, bool AllowDelete, bool ContinueSection )
 {
 	if (this == NULL) 
 	{
@@ -69,7 +97,7 @@ void CBlockSection::UnlinkParent( CBlockSection * Parent, bool AllowDelete, bool
 	SECTION_LIST::iterator iter = ParentSection.begin();
 	while ( iter != ParentSection.end())
 	{
-		CBlockSection * ParentIter = *iter;
+		CCodeSection * ParentIter = *iter;
 		if (ParentIter == Parent && (Parent->ContinueSection != this || Parent->JumpSection != this))
 		{
 			ParentSection.erase(iter);
@@ -119,11 +147,11 @@ void CBlockSection::UnlinkParent( CBlockSection * Parent, bool AllowDelete, bool
 	}	
 }
 
-CBlockSection::~CBlockSection ( void )
+CCodeSection::~CCodeSection ( void )
 {
 	while (ParentSection.size() > 0)
 	{
-		CBlockSection * Parent = *ParentSection.begin();
+		CCodeSection * Parent = *ParentSection.begin();
 		if (Parent->ContinueSection == this) { UnlinkParent(Parent, false, true); }
 		if (Parent->JumpSection == this)     { UnlinkParent(Parent, false, false); }
 	}
@@ -148,7 +176,7 @@ CBlockSection::~CBlockSection ( void )
 	}
 }
 
-DWORD CBlockSection::GetNewTestValue(void) 
+DWORD CCodeSection::GetNewTestValue(void) 
 {
 	static DWORD LastTest = 0;
 	if (LastTest == 0xFFFFFFFF) { LastTest = 0; }
@@ -156,7 +184,7 @@ DWORD CBlockSection::GetNewTestValue(void)
 	return LastTest;
 }
 
-void CBlockSection::TestRegConstantStates( CRegInfo & Base, CRegInfo & Reg  )
+void CCodeSection::TestRegConstantStates( CRegInfo & Base, CRegInfo & Reg  )
 {
 	for (int count = 0; count < 32; count++) {
 		if (Reg.MipsRegState(count) != Base.MipsRegState(count)) {
@@ -179,7 +207,7 @@ void CBlockSection::TestRegConstantStates( CRegInfo & Base, CRegInfo & Reg  )
 	}
 }
 
-void CBlockSection::AddParent(CBlockSection * Parent )
+void CCodeSection::AddParent(CCodeSection * Parent )
 {
 	if (this == NULL) { return; }
 	if (Parent == NULL) 
@@ -220,14 +248,6 @@ void CBlockSection::AddParent(CBlockSection * Parent )
 	}
 }
 
-void CBlockSection::ResetX86Protection (void)
-{
-	for (int count = 1; count < 10; count ++) 
-	{ 
-		RegWorking.x86Protected(count) = false;
-	}
-}
-
 void CRegInfo::Initilize ( void )
 {
 	int count;
@@ -256,6 +276,8 @@ void CRegInfo::Initilize ( void )
 	Fpu_Used = false;
 	RoundingModel = RoundUnknown;
 }
+
+#endif
 
 CRegInfo::REG_STATE CRegInfo::ConstantsType (__int64 Value) 
 {
@@ -287,8 +309,7 @@ bool CRegInfo::compare(const CRegInfo& right) const
 		if (x86reg_Protected[count] != right.x86reg_Protected[count]) { return false; }
 		if (x86reg_MapOrder[count]  != right.x86reg_MapOrder[count]) { return false; }
 	}
-	if (CycleCount != right.CycleCount) { return false; }
-	if (RandomModifier != right.RandomModifier) { return false; }
+	if (m_CycleCount != right.m_CycleCount) { return false; }
 	if (Stack_TopPos != right.Stack_TopPos) { return false; }
 
 	for (count = 0; count < 8; count ++ ) {
@@ -305,3 +326,5 @@ bool CRegInfo::operator!=(const CRegInfo& right) const
 {
 	return !compare(right);
 }
+
+

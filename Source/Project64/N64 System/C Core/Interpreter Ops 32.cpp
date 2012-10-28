@@ -166,9 +166,9 @@ R4300iOp_FUNC * R4300iOp32::BuildInterpreter (void )
 	Jump_Special[13] = UnknownOpcode;
 	Jump_Special[14] = UnknownOpcode;
 	Jump_Special[15] = SPECIAL_SYNC;
-	Jump_Special[16] = SPECIAL_MFHI;
+	Jump_Special[16] = R4300iOp::SPECIAL_MFHI;
 	Jump_Special[17] = SPECIAL_MTHI;
-	Jump_Special[18] = SPECIAL_MFLO;
+	Jump_Special[18] = R4300iOp::SPECIAL_MFLO;
 	Jump_Special[19] = SPECIAL_MTLO;
 	Jump_Special[20] = R4300iOp::SPECIAL_DSLLV;
 	Jump_Special[21] = UnknownOpcode;
@@ -1204,16 +1204,8 @@ void _fastcall R4300iOp32::SPECIAL_BREAK (void) {
 void _fastcall R4300iOp32::SPECIAL_SYNC (void) {
 }
 
-void _fastcall R4300iOp32::SPECIAL_MFHI (void) {
-	_GPR[Opcode.rd].W[0] = _RegHI->W[0];
-}
-
 void _fastcall R4300iOp32::SPECIAL_MTHI (void) {
 	_RegHI->W[0] = _GPR[Opcode.rs].W[0];
-}
-
-void _fastcall R4300iOp32::SPECIAL_MFLO (void) {
-	_GPR[Opcode.rd].W[0] = _RegLO->W[0];
 }
 
 void _fastcall R4300iOp32::SPECIAL_MTLO (void) {

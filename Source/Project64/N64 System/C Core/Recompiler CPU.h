@@ -218,8 +218,8 @@ typedef struct {
 #ifdef __cplusplus
 
 //void CompileSystemCheck     ( DWORD TargetPC, CRegInfo RegSet );
-//void FreeSection            ( CBlockSection * Section, CBlockSection * Parent);
-void GenerateSectionLinkage ( CBlockSection * Section );
+//void FreeSection            ( CCodeSection * Section, CCodeSection * Parent);
+void GenerateSectionLinkage ( CCodeSection * Section );
 
 extern "C" {
 #endif
@@ -240,6 +240,6 @@ extern N64_BLOCKS N64_Blocks;
 #endif
 
 #define SetJump32(Loc,JumpLoc) *(DWORD *)(Loc)= (DWORD)(((DWORD)(JumpLoc)) - (((DWORD)(Loc)) + 4));
-#define SetJump8(Loc,JumpLoc)  *(BYTE  *)(Loc)= (BYTE )(((BYTE )((DWORD_PTR)JumpLoc & 0xFF)) - (((BYTE )((DWORD_PTR)Loc & 0xFF)) + 1));
+#define SetJump8(Loc,JumpLoc)  *(BYTE  *)(Loc)= (BYTE )(((BYTE )(JumpLoc)) - (((BYTE )(Loc)) + 1));
 
 #endif

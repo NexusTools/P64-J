@@ -6,7 +6,6 @@
 
 #include "..\\Types.h"
 #include "Interpreter CPU.h"
-#include "Interpreter Ops.h"
 #include "Recompiler CPU.h"
 #include "c memory.h"
 #include "Registers.h"
@@ -20,10 +19,6 @@
 #include "mempak.h"
 #include "pif.h"
 #include "Sync Cpu.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 //extern int NextInstruction/*, ManualPaused*/;
 extern DWORD JumpToLocation;
@@ -62,7 +57,3 @@ int  DelaySlotEffectsCompare ( DWORD PC, DWORD Reg1, DWORD Reg2 );
 int  DelaySlotEffectsJump (DWORD JumpPC);
 void InPermLoop         ( void );
 void DisplayFPS         ( void );
-
-#ifdef __cplusplus
-}
-#endif

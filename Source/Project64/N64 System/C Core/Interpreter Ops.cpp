@@ -950,9 +950,6 @@ void _fastcall R4300iOp::LH (void) {
 	}
 }
 
-DWORD LWL_MASK[4] = { 0,0xFF,0xFFFF,0xFFFFFF };
-int LWL_SHIFT[4] = { 0, 8, 16, 24};
-
 void _fastcall R4300iOp::LWL (void) {
 	DWORD Offset, Address, Value;
 	
@@ -1033,9 +1030,6 @@ void _fastcall R4300iOp::LHU (void) {
 	}
 }
 
-DWORD LWR_MASK[4] = { 0xFFFFFF00, 0xFFFF0000, 0xFF000000, 0 };
-int LWR_SHIFT[4] = { 24, 16 ,8, 0 };
-
 void _fastcall R4300iOp::LWR (void) {
 	DWORD Offset, Address, Value;
 	
@@ -1086,9 +1080,6 @@ void _fastcall R4300iOp::SH (void) {
 #endif
 	}
 }
-
-DWORD SWL_MASK[4] = { 0,0xFF000000,0xFFFF0000,0xFFFFFF00 };
-int SWL_SHIFT[4] = { 0, 8, 16, 24 };
 
 void _fastcall R4300iOp::SWL (void) {
 	DWORD Offset, Address, Value;
@@ -1213,9 +1204,6 @@ void _fastcall R4300iOp::SDR (void) {
 #endif
 	}
 }
-
-DWORD SWR_MASK[4] = { 0x00FFFFFF,0x0000FFFF,0x000000FF,0x00000000 };
-int SWR_SHIFT[4] = { 24, 16 , 8, 0  };
 
 void _fastcall R4300iOp::SWR (void) {
 	DWORD Offset, Address, Value;
