@@ -1,8 +1,4 @@
-#include "..\N64 System.h"
-
-#include <Windows.h>
-#include <windowsx.h>
-#include <commctrl.h>
+#include "stdafx.h"
 
 #include "Settings/SettingType/SettingsType-Cheats.h"
 
@@ -761,7 +757,7 @@ int CALLBACK CCheats::CheatAddProc (WND_HANDLE hDlg,DWORD uMsg,DWORD wParam, DWO
 							}
 							break;
 						}
-						if (_stricmp(CheatName.c_str(),NewCheatName.c_str()) == 0) {
+						if (stricmp(CheatName.c_str(),NewCheatName.c_str()) == 0) {
 							_Notify->DisplayError(GS(MSG_CHEAT_NAME_IN_USE));
 							SetFocus(GetDlgItem((HWND)hDlg,IDC_CODE_NAME));
 							return true;

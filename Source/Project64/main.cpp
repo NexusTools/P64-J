@@ -61,7 +61,7 @@ void FixUPXIssue ( BYTE * ProgramLocation )
 	SetFilePointer(hFile,(8 + SizeOfSections) * -1,0,FILE_END);
 	ReadFile(hFile,Section,SizeOfSections,&dwRead,NULL);
 
-	for (DWORD count = 0; count < NoOfSections; count ++ ) 
+	for (int count = 0; count < NoOfSections; count ++ ) 
 	{
 		LPVOID Address = ProgramLocation + Section[count].VirtualAddress;
 		MEMORY_BASIC_INFORMATION Buffer;
@@ -153,7 +153,7 @@ void InitializeLog ( void)
 	}
 	LogFilePath.SetNameExtension(_T("Project64.log"));
 
-	CTraceFileLog * LogFile = new CTraceFileLog(LogFilePath, _Settings->LoadDword(Debugger_AppLogFlush) != 0, Log_New);
+	CTraceFileLog * LogFile = new CTraceFileLog(LogFilePath, _Settings->LoadDword(Debugger_AppLogFlush) != 0, Log_New,500);
 #ifdef VALIDATE_DEBUG
 	LogFile->SetTraceLevel((TraceLevel)(_Settings->LoadDword(Debugger_AppLogLevel) | TraceValidate));
 #else
