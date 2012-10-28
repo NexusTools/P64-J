@@ -445,6 +445,10 @@
 					RelativePath="N64 System\Speed Limitor Class.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\N64 System\System Globals.cpp"
+					>
+				</File>
 				<Filter
 					Name="Mips Source"
 					>
@@ -493,7 +497,7 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\C main.c"
+						RelativePath=".\N64 System\C Core\C main.cpp"
 						>
 					</File>
 					<File
@@ -517,7 +521,7 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\Exception.c"
+						RelativePath=".\N64 System\C Core\Exception.cpp"
 						>
 					</File>
 					<File
@@ -525,11 +529,15 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\Interpreter CPU.cpp"
+						RelativePath=".\N64 System\C Core\Interpreter CPU.cpp"
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\Interpreter Ops.c"
+						RelativePath=".\N64 System\C Core\Interpreter Ops 32.cpp"
+						>
+					</File>
+					<File
+						RelativePath=".\N64 System\C Core\Interpreter Ops.cpp"
 						>
 					</File>
 					<File
@@ -545,7 +553,7 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\r4300i Commands.c"
+						RelativePath=".\N64 System\C Core\r4300i Commands.cpp"
 						>
 					</File>
 					<File
@@ -573,7 +581,7 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\Sram.c"
+						RelativePath=".\N64 System\C Core\Sram.cpp"
 						>
 					</File>
 					<File
@@ -593,11 +601,11 @@
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\x86 fpu.c"
+						RelativePath=".\N64 System\C Core\x86 fpu.cpp"
 						>
 					</File>
 					<File
-						RelativePath="N64 System\C Core\X86.c"
+						RelativePath=".\N64 System\C Core\X86.cpp"
 						>
 					</File>
 				</Filter>

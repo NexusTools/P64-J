@@ -8,13 +8,11 @@
 
 CPj64Module _Module;
 
-CDebugger::CDebugger (CN64System * System, CMipsMemory *& MMU) :
+CDebugger::CDebugger () :
 	m_MemoryDump(NULL),
 	m_MemoryView(NULL),
 	m_MemorySearch(NULL),
-	m_DebugTLB(NULL),
-	m_MMU(MMU),
-	m_System(System)
+	m_DebugTLB(NULL)
 {
 }
 
@@ -53,13 +51,13 @@ void CDebugger::Debug_Reset ( void )
 
 void CDebugger::Debug_ShowMemoryDump()
 {
-	if (m_MMU == NULL)
+	if (_MMU == NULL)
 	{
 		return;
 	}
 	if (m_MemoryDump == NULL)
 	{
-		m_MemoryDump = new CDumpMemory(m_System, m_MMU, this);
+		m_MemoryDump = new CDumpMemory(this);
 	}
 	if (m_MemoryDump)
 	{
@@ -69,13 +67,13 @@ void CDebugger::Debug_ShowMemoryDump()
 
 void CDebugger::Debug_ShowMemoryWindow ( void )
 {
-	if (m_MMU == NULL)
+	if (_MMU == NULL)
 	{
 		return;
 	}
 	if (m_MemoryView == NULL)
 	{
-		m_MemoryView = new CDebugMemoryView(m_MMU, this);
+		m_MemoryView = new CDebugMemoryView(this);
 	}
 	if (m_MemoryView)
 	{
@@ -94,13 +92,13 @@ void CDebugger::Debug_ShowMemoryLocation ( DWORD Address, bool VAddr )
 
 void CDebugger::Debug_ShowTLBWindow (void)
 {
-	if (m_MMU == NULL)
+	if (_MMU == NULL)
 	{
 		return;
 	}
 	if (m_DebugTLB == NULL)
 	{
-		m_DebugTLB = new CDebugTlb(m_MMU, this);
+		m_DebugTLB = new CDebugTlb(this);
 	}
 	if (m_DebugTLB)
 	{
@@ -120,7 +118,7 @@ void CDebugger::Debug_ShowMemorySearch()
 {
 	if (m_MemorySearch == NULL)
 	{
-		m_MemorySearch = new CDebugMemorySearch(m_System, m_MMU, this);
+		m_MemorySearch = new CDebugMemorySearch(this);
 	}
 	if (m_MemorySearch)
 	{

@@ -1,9 +1,4 @@
 #include "../../User Interface.h"
-#include "../../User Interface/WTL Controls/ModifiedCheckBox.h"
-#include "../../User Interface/WTL Controls/ModifiedEditBox.h"
-#include "../../User Interface/WTL Controls/ModifiedComboBox.h"
-#include "../../User Interface/WTL Controls/PartialGroupBox.h"
-#include "../../User Interface/Settings Config.h"
 #include "Settings Page.h"
 #include "Settings Page - Game - Recompiler.h"
 

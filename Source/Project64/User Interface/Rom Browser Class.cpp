@@ -9,7 +9,7 @@
 #include <shlobj.h>
 #include <math.h>
 
-CRomBrowser::CRomBrowser (WND_HANDLE & MainWindow, WND_HANDLE & StatusWindow, CNotification * Notify, CN64System * System) :
+CRomBrowser::CRomBrowser (WND_HANDLE & MainWindow, WND_HANDLE & StatusWindow ) :
 	m_MainWindow(MainWindow), 
 	m_StatusWindow(StatusWindow),
 	m_RefreshThread(NULL),
@@ -19,9 +19,7 @@ CRomBrowser::CRomBrowser (WND_HANDLE & MainWindow, WND_HANDLE & StatusWindow, CN
 	m_ZipIniFile(NULL),
 	m_WatchThreadID(0),
 	m_ShowingRomBrowser(false),
-	_Notify(Notify),
-	m_AllowSelectionLastRom(true),
-	m_Plugins(NULL)
+	m_AllowSelectionLastRom(true)
 {
 	if (_Settings) {
 		m_RomIniFile = new CIniFile(_Settings->LoadString(SupportFile_RomDatabase).c_str());
@@ -29,7 +27,6 @@ CRomBrowser::CRomBrowser (WND_HANDLE & MainWindow, WND_HANDLE & StatusWindow, CN
 		m_ExtIniFile = new CIniFile(_Settings->LoadString(SupportFile_ExtInfo).c_str());
 		m_ZipIniFile = new CIniFile(_Settings->LoadString(SupportFile_7zipCache).c_str());
 	}
-	_System = System;
 	
 	m_hRomList = 0;
 	m_Visible  = false;
@@ -136,7 +133,7 @@ int CRomBrowser::CalcSortPosition (DWORD lParam)
 		int LastTestPos = -1;
 		while (Start < End)
 		{
-			int TestPos = (int)floor((float)((Start + End) / 2));
+			int TestPos = floor((float)((Start + End) / 2));
 			if (LastTestPos == TestPos)
 			{
 				TestPos += 1;
@@ -169,11 +166,11 @@ int CRomBrowser::CalcSortPosition (DWORD lParam)
 			else
 			{
 				//Find new start
-				float Left = (float)Start;
-				float Right = (float)TestPos;
+				float Left = Start;
+				float Right = TestPos;
 				while (Left < Right)
 				{
-					int NewTestPos = (int)floor((Left + Right) / 2);
+					int NewTestPos = floor((Left + Right) / 2);
 					if (LastTestPos == NewTestPos)
 					{
 						NewTestPos += 1;
@@ -193,7 +190,7 @@ int CRomBrowser::CalcSortPosition (DWORD lParam)
 						{
 							break;
 						}
-						Right = (float)NewTestPos;
+						Right = NewTestPos;
 					}
 					if (Result > 0)
 					{
@@ -549,7 +546,7 @@ void CRomBrowser::GetRomFileNames( strlist & FileList, CPath & BaseDirectory, st
 
 void CRomBrowser::NotificationCB ( LPCSTR Status, CRomBrowser * _this )
 {
-	_this->_Notify->DisplayMessage(5,"%s",Status);
+ 	_Notify->DisplayMessage(5,"%s",Status);
 }
 
 
@@ -794,7 +791,7 @@ bool CRomBrowser::IsValidRomImage ( BYTE Test[4] ) {
 bool CRomBrowser::LoadDataFromRomFile(char * FileName,BYTE * Data,int DataLen, int * RomSize, FILE_FORMAT & FileFormat) {
 	BYTE Test[4];
 
-	if (_strnicmp(&FileName[strlen(FileName)-4], ".ZIP",4) == 0 ){ 
+	if (strnicmp(&FileName[strlen(FileName)-4], ".ZIP",4) == 0 ){ 
 		int len, port = 0, FoundRom;
 	    unz_file_info info;
 		char zname[132];
@@ -1344,7 +1341,7 @@ void CRomBrowser::RomList_OpenRom(DWORD pnmh) {
 
 	if (!pRomInfo) { return; }
 	m_StopRefresh = true;
-	_System->RunFileImage(pRomInfo->szFullFileName);
+	_N64System->RunFileImage(pRomInfo->szFullFileName);
 }
 
 void CRomBrowser::RomList_PopupMenu(DWORD pnmh) {
@@ -1397,9 +1394,9 @@ void CRomBrowser::RomList_PopupMenu(DWORD pnmh) {
 		if (inBasicMode) { DeleteMenu((HMENU)hPopupMenu,8,MF_BYPOSITION); }
 		if (inBasicMode && !CheatsRemembered) { DeleteMenu((HMENU)hPopupMenu,7,MF_BYPOSITION); }
 		DeleteMenu((HMENU)hPopupMenu,6,MF_BYPOSITION); 
-		if (!inBasicMode && m_Plugins && m_Plugins->Gfx() && m_Plugins->Gfx()->GetRomBrowserMenu != NULL)
+		if (!inBasicMode && _Plugins && _Plugins->Gfx() && _Plugins->Gfx()->GetRomBrowserMenu != NULL)
 		{
-			HMENU GfxMenu = (HMENU)m_Plugins->Gfx()->GetRomBrowserMenu();
+			HMENU GfxMenu = (HMENU)_Plugins->Gfx()->GetRomBrowserMenu();
 			if (GfxMenu)
 			{
 				MENUITEMINFO lpmii;
@@ -1516,7 +1513,8 @@ int CALLBACK CRomBrowser::SelectRomDirCallBack(WND_HANDLE hwnd,DWORD uMsg,DWORD 
   return 0;
 }
 
-void CRomBrowser::SelectRomDir(CNotification * Notify) {
+void CRomBrowser::SelectRomDir(void)
+{
 	char SelectedDir[MAX_PATH];
 	LPITEMIDLIST pidl;
 	BROWSEINFO bi;
@@ -1545,7 +1543,7 @@ void CRomBrowser::SelectRomDir(CNotification * Notify) {
 			WriteTrace(TraceDebug,"CRomBrowser::SelectRomDir 6");
 			_Settings->SaveString(Directory_Game,Directory);
 			WriteTrace(TraceDebug,"CRomBrowser::SelectRomDir 7");
-			Notify->AddRecentDir(Directory);
+			_Notify->AddRecentDir(Directory);
 			WriteTrace(TraceDebug,"CRomBrowser::SelectRomDir 8");
 			RefreshRomBrowser();
 			WriteTrace(TraceDebug,"CRomBrowser::SelectRomDir 9");
@@ -1611,10 +1609,8 @@ void CRomBrowser::ShowRomList (void) {
 	m_Visible = true;
 
 	RECT rcWindow;
-	if (GetClientRect((HWND)m_MainWindow,&rcWindow))
-	{
-		ResizeRomList(rcWindow.right,rcWindow.bottom);
-	}
+	GetClientRect((HWND)m_MainWindow,&rcWindow);
+	ResizeRomList(rcWindow.right,rcWindow.bottom);
 
 	InvalidateRect((HWND)m_hRomList,NULL,TRUE);
 
@@ -1843,9 +1839,4 @@ void CRomBrowser::Store7ZipInfo (CSettings * Settings, C7zip & ZipFile, int File
 	//delete cache
 	stdstr CacheFileName = Settings->LoadString(SupportFile_RomListCache);
 	DeleteFile(CacheFileName.c_str());
-}
-
-void CRomBrowser::SetPluginList ( CPlugins * Plugins )
-{
-	m_Plugins = Plugins;
 }

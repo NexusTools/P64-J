@@ -25,7 +25,7 @@
  */
 #include <windows.h>
 #include <MMSystem.h>
-#include "main.h"
+//#include "main.h"
 #pragma comment(lib, "Winmm.lib")
 
 /********************* Win32 Thread Timer ********************/
@@ -44,7 +44,7 @@ void Timer_Start(void) {
 	timeGetDevCaps(&Caps, sizeof(Caps));
 	if (timeBeginPeriod(Caps.wPeriodMin) == TIMERR_NOCANDO)
 	{
-		DisplayError("Error during timer begin");
+		//DisplayError("Error during timer begin");
 	}
 
 	FPSTimer.Frames = 0;
